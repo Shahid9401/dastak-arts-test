@@ -181,8 +181,7 @@ def render_student_view():
                         td {{
                             text-align:center;
                             padding:10px;
-                            color: #ffffff;
-                            white-space: normal;
+                            color: inherit;
                             word-wrap: break-word;
                         }}
 
