@@ -152,11 +152,12 @@ def render_student_view():
             event_df = df_final[df_final["Event"] == event_filter]
             event_display_df = event_df[["Position", "Name", "Class", "Group"]]
 
-            # 1. BUILD THE ROWS IN PYTHON FIRST
+            # 1. Build rows manually to avoid the 'Double Header' issue
             table_rows_html = ""
             for _, row in event_display_df.iterrows():
-                # Logic for the gold highlight on the "First" place row
-                row_style = 'style="background-color: rgba(255, 215, 0, 0.2);"' if str(row['Position']).strip().lower() == "first" else ""
+                # Highlight First Place with a subtle gold
+                is_first = str(row['Position']).strip().lower() == "first"
+                row_style = 'style="background-color: rgba(255, 215, 0, 0.25); font-weight: 600;"' if is_first else ""
                 
                 table_rows_html += f"""
                 <tr {row_style}>
@@ -167,38 +168,46 @@ def render_student_view():
                 </tr>
                 """
 
-            # 2. INJECT INTO COMPONENTS.HTML
             import streamlit.components.v1 as components
 
+            # 2. Render with THEME-AWARE CSS
             components.html(
                 f"""
-                <div style="overflow-x: auto; max-width: 100%; border-radius: 8px; border: 1px solid rgba(128,128,128,0.2);">
+                <div style="overflow-x: auto; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2);">
                     <style>
+                        :root {{
+                            --bg: #ffffff;
+                            --text: #1a1a1a;
+                            --header-bg: #f8f9fa;
+                        }}
+                        
+                        /* This detects if the user's phone is in Dark Mode */
+                        @media (prefers-color-scheme: dark) {{
+                            :root {{
+                                --bg: #0e1117;
+                                --text: #fafafa;
+                                --header-bg: #1d2129;
+                            }}
+                        }}
+
                         table {{
                             width: 100%;
                             border-collapse: collapse;
-                            font-family: sans-serif;
-                            color: var(--text-color, #31333F);
-                            background-color: var(--background-color, #ffffff);
+                            font-family: -apple-system, system-ui, sans-serif;
+                            background-color: var(--bg);
+                            color: var(--text);
                         }}
                         th {{
-                            background-color: rgba(128, 128, 128, 0.15);
-                            color: var(--text-color);
+                            background-color: var(--header-bg);
+                            color: var(--text);
+                            padding: 12px;
                             font-weight: bold;
-                            text-align: center;
-                            padding: 12px 8px;
-                            border-bottom: 2px solid rgba(128, 128, 128, 0.3);
+                            border-bottom: 2px solid rgba(128,128,128,0.3);
                         }}
                         td {{
+                            padding: 12px 8px;
                             text-align: center;
-                            padding: 10px 8px;
-                            color: var(--text-color);
-                            border-bottom: 1px solid rgba(128, 128, 128, 0.1);
-                        }}
-                        /* Dark Mode forced visibility */
-                        @media (prefers-color-scheme: dark) {{
-                            table {{ color: #fafafa !important; background-color: #0e1117; }}
-                            td, th {{ color: #fafafa !important; }}
+                            border-bottom: 1px solid rgba(128,128,128,0.1);
                         }}
                     </style>
                     <table>
@@ -216,5 +225,5 @@ def render_student_view():
                     </table>
                 </div>
                 """,
-                height=400,
+                height=350,
             )
