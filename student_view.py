@@ -170,8 +170,8 @@ def render_student_view():
                             table-layout: fixed;
                         }}
                         th {{
-                            background:#2f2f2f;
-                            color:#ffffff;
+                            background:rgba(200,200,200,0.9);
+                            color:inherit;
                             font-weight:bold;
                             text-align:center;
                             padding:10px;
@@ -182,14 +182,15 @@ def render_student_view():
                             text-align:center;
                             padding:10px;
                             color: inherit;
+                            white-space:normal;
                             word-wrap: break-word;
                         }}
 
                         /* 🥇 First place highlight */
                         tbody tr:nth-child(1) {{
-                            background:rgba(255,215,0,0.28);
+                            background:rgba(255,215,0,0.25);
                             font-weight:700;
-                            border-left:6px solid #f5b301;
+                            
                         }}
 
                         tr {{
