@@ -155,6 +155,7 @@ def render_student_view():
 
             html_event_table = event_display_df.to_html(
                 index=False,
+                header=False,
                 escape=False
             )
 
@@ -162,44 +163,57 @@ def render_student_view():
 
             components.html(
                 f"""
-                <div style="max-width:900px;margin:auto;">
+                <div style="overflow-x: auto; max-width: 100%; border-radius: 8px;">
                     <style>
                         table {{
-                            width:100%;
-                            border-collapse:collapse;
-                            table-layout: fixed;
+                            width: 100%;
+                            border-collapse: collapse;
+                            table-layout: auto; /* Changed to auto for better mobile fitting */
+                            font-family: sans-serif;
+                            color: var(--text-color, #31333F); /* Fallback to Streamlit default dark text */
+                            background-color: var(--background-color, #ffffff);
                         }}
                         th {{
-                            background:rgba(200,200,200,0.9);
-                            color:inherit;
-                            font-weight:bold;
-                            text-align:center;
-                            padding:10px;
-                            white-space: normal;
-                            word-wrap: break-word;
+                            background-color: rgba(128, 128, 128, 0.15); /* Subtle grey that works in both modes */
+                            color: var(--text-color);
+                            font-weight: bold;
+                            text-align: center;
+                            padding: 12px 8px;
+                            border-bottom: 2px solid rgba(128, 128, 128, 0.3);
                         }}
                         td {{
-                            text-align:center;
-                            padding:10px;
-                            color: inherit;
-                            white-space:normal;
-                            word-wrap: break-word;
+                            text-align: center;
+                            padding: 10px 8px;
+                            color: var(--text-color);
+                            border-bottom: 1px solid rgba(128, 128, 128, 0.1);
                         }}
-
-                        /* 🥇 First place highlight */
+                        
+                        /* First place highlight - Gold with low opacity */
                         tbody tr:nth-child(1) {{
-                            background:rgba(255,215,0,0.25);
-                            font-weight:700;
-                            
+                            background-color: rgba(255, 215, 0, 0.2); 
+                            font-weight: 600;
                         }}
-
-                        tr {{
-                            border-bottom:1px solid rgba(255,255,255,0.15);
+                        /* Ensuring text stays visible in Dark Mode */
+                        @media (prefers-color-scheme: dark) {{
+                            table {{
+                                color: #fafafa;
+                            }}
                         }}
                     </style>
-
-                    {html_event_table}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Name</th>
+                                <th>Class</th>
+                                <th>Group</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {html_event_table} 
+                        </tbody>
+                    </table>
                 </div>
                 """,
-                height=400,
+                height=400, # Adjust height based on your needs
             )
