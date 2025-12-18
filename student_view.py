@@ -170,8 +170,8 @@ def render_student_view():
                             table-layout: fixed;
                         }}
                         th {{
-                            background:rgba(255,255,255,0.85);
-                            color:#000000;
+                            background:#2f2f2f;
+                            color:#ffffff;
                             font-weight:bold;
                             text-align:center;
                             padding:10px;
