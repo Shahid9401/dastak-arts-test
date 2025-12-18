@@ -109,7 +109,8 @@ def render_student_view():
                 <style>
                     table {{ width:100%; border-collapse:collapse; }}
                     th {{
-                        background:#f2f2f2;
+                        background:#2f2f2f;
+                        color:#ffffff;
                         font-weight:bold;
                         text-align:center !important;
                         padding:10px;
@@ -117,11 +118,16 @@ def render_student_view():
                     td {{
                         text-align:center !important;
                         padding:10px;
+                        color:inherit;
                     }}
+                    /* First place highlight – mode safe */
                     tr:nth-child(1) {{
-                        background-color:#fff4cc;
-                        font-weight:bold;
+                        background:rgba(255,215,0,0.15);
+                        font-weight:700
+                        border-left:6px solid #f5b301;
                     }}
+                    /* Row Borders for clarity*/
+                    tr{{border-bottom:1px solid rgba(255,215,0,0.15)}}
                 </style>
                 {html_table}
             </div>
@@ -152,11 +158,47 @@ def render_student_view():
                 escape=False
             )
 
-            st.markdown(
+            import streamlit.components.v1 as components
+
+            components.html(
                 f"""
                 <div style="max-width:900px;margin:auto;">
-                {html_event_table}
+                    <style>
+                        table {{
+                            width:100%;
+                            border-collapse:collapse;
+                            table-layout: fixed;
+                        }}
+                        th {{
+                            background:#f2f2f2;
+                            color:#000000;
+                            font-weight:bold;
+                            text-align:center;
+                            padding:10px;
+                            white-space: normal;
+                            word-wrap: break-word;
+                        }}
+                        td {{
+                            text-align:center;
+                            padding:10px;
+                            white-space: normal;
+                            word-wrap: break-word;
+                        }}
+
+                        /* 🥇 First place highlight */
+                        tbody tr:nth-child(1) {{
+                            background:rgba(255,215,0,0.18);
+                            font-weight:700;
+                            border-left:6px solid #f5b301;
+                        }}
+
+                        tr {{
+                            border-bottom:1px solid rgba(0,0,0,0.1);
+                        }}
+                    </style>
+
+                    {html_event_table}
                 </div>
                 """,
-                unsafe_allow_html=True
+                height=400,
             )
