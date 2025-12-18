@@ -150,31 +150,39 @@ def render_student_view():
 
         if event_filter != "-- Select Event --":
             event_df = df_final[df_final["Event"] == event_filter]
-
             event_display_df = event_df[["Position", "Name", "Class", "Group"]]
 
-            html_event_table = event_display_df.to_html(
-                index=False,
-                header=False,
-                escape=False
-            )
+            # 1. BUILD THE ROWS IN PYTHON FIRST
+            table_rows_html = ""
+            for _, row in event_display_df.iterrows():
+                # Logic for the gold highlight on the "First" place row
+                row_style = 'style="background-color: rgba(255, 215, 0, 0.2);"' if str(row['Position']).strip().lower() == "first" else ""
+                
+                table_rows_html += f"""
+                <tr {row_style}>
+                    <td>{row['Position']}</td>
+                    <td>{row['Name']}</td>
+                    <td>{row['Class']}</td>
+                    <td>{row['Group']}</td>
+                </tr>
+                """
 
+            # 2. INJECT INTO COMPONENTS.HTML
             import streamlit.components.v1 as components
 
             components.html(
                 f"""
-                <div style="overflow-x: auto; max-width: 100%; border-radius: 8px;">
+                <div style="overflow-x: auto; max-width: 100%; border-radius: 8px; border: 1px solid rgba(128,128,128,0.2);">
                     <style>
                         table {{
                             width: 100%;
                             border-collapse: collapse;
-                            table-layout: auto; /* Changed to auto for better mobile fitting */
                             font-family: sans-serif;
-                            color: var(--text-color, #31333F); /* Fallback to Streamlit default dark text */
+                            color: var(--text-color, #31333F);
                             background-color: var(--background-color, #ffffff);
                         }}
                         th {{
-                            background-color: rgba(128, 128, 128, 0.15); /* Subtle grey that works in both modes */
+                            background-color: rgba(128, 128, 128, 0.15);
                             color: var(--text-color);
                             font-weight: bold;
                             text-align: center;
@@ -187,17 +195,10 @@ def render_student_view():
                             color: var(--text-color);
                             border-bottom: 1px solid rgba(128, 128, 128, 0.1);
                         }}
-                        
-                        /* First place highlight - Gold with low opacity */
-                        tbody tr:nth-child(1) {{
-                            background-color: rgba(255, 215, 0, 0.2); 
-                            font-weight: 600;
-                        }}
-                        /* Ensuring text stays visible in Dark Mode */
+                        /* Dark Mode forced visibility */
                         @media (prefers-color-scheme: dark) {{
-                            table {{
-                                color: #fafafa;
-                            }}
+                            table {{ color: #fafafa !important; background-color: #0e1117; }}
+                            td, th {{ color: #fafafa !important; }}
                         }}
                     </style>
                     <table>
@@ -210,10 +211,10 @@ def render_student_view():
                             </tr>
                         </thead>
                         <tbody>
-                            {html_event_table} 
+                            {table_rows_html}
                         </tbody>
                     </table>
                 </div>
                 """,
-                height=400, # Adjust height based on your needs
+                height=400,
             )
