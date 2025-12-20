@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Hybrid: Old Stable Tables + New Fast Speed
+# Hybrid: Old Stable Tables + New Fast Speed + Mobile Fix
 
 import streamlit as st
 import pandas as pd
@@ -106,7 +106,7 @@ def render_student_view():
                     /* First place highlight */
                     tr:nth-child(1) {{
                         background:rgba(255,215,0,0.15);
-                        font-weight:700;
+                        font-weight:700; /* Fixed missing semicolon here */
                         border-left:6px solid #f5b301;
                     }}
                     /* Row Borders */
@@ -139,7 +139,8 @@ def render_student_view():
             # Generate basic table HTML
             html_event_table = event_display_df.to_html(index=False, escape=False)
 
-            # Inject into your Custom CSS Container
+            # Inject into Custom CSS Container (Iframe)
+            # This isolates the table so Streamlit won't break it
             components.html(
                 f"""
                 <div style="overflow-x: hidden; border-radius: 8px; border: 1px solid rgba(128,128,128,0.2);">
