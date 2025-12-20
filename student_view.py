@@ -99,63 +99,36 @@ def render_student_view():
             """
 
         # Render Table
-        components.html(
+        st.markdown(
             f"""
-            <div style="overflow-x: hidden; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2);">
+            <div style="max-width:900px; margin:auto;">
                 <style>
-                    :root {{ --bg: #ffffff; --text: #1a1a1a; --header-bg: #f8f9fa; }}
-                    @media (prefers-color-scheme: dark) {{ :root {{ --bg: #0e1117; --text: #fafafa; --header-bg: #1d2129; }} }}
-                    
-                    body {{ margin: 0; padding: 0; font-family: sans-serif; }}
-                    
-                    table {{ 
-                        width: 100%; 
-                        table-layout: fixed; 
-                        border-collapse: collapse; 
-                        background-color: var(--bg); 
-                        color: var(--text); 
+                    table {{ width:100%; border-collapse:collapse; }}
+                    th {{
+                        background:#2f2f2f;
+                        color:#ffffff;
+                        font-weight:bold;
+                        text-align:center !important;
+                        padding:10px;
                     }}
-                    
-                    th {{ 
-                        background-color: var(--header-bg); 
-                        color: var(--text); 
-                        padding: 12px 5px;
-                        font-weight: bold; 
-                        border-bottom: 2px solid rgba(128,128,128,0.3);
-                        font-size: 13px;
-                        text-transform: uppercase;
-                        text-align: center;
+                    td {{
+                        text-align:center !important;
+                        padding:10px;
+                        color:inherit;
                     }}
-                    
-                    td {{ 
-                        padding: 10px 5px; 
-                        border-bottom: 1px solid rgba(128,128,128,0.1); 
-                        font-size: 13px;
-                        white-space: normal; 
-                        word-wrap: break-word;
-                        vertical-align: middle;
-                        text-align: center;
+                    /* First place highlight – mode safe */
+                    tr:nth-child(1) {{
+                        background:rgba(255,215,0,0.15);
+                        font-weight:700
+                        border-left:6px solid #f5b301;
                     }}
-
-                    /* COLUMN WIDTHS */
-                    .col-rank {{ width: 15%; }}
-                    .col-group {{ width: 65%; text-align: left; padding-left: 10px; }}
-                    .col-points {{ width: 20%; font-weight: bold; }}
-                    
+                    /* Row Borders for clarity*/
+                    tr{{border-bottom:1px solid rgba(255,215,0,0.15)}}
                 </style>
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="col-rank">Rank</th>
-                            <th class="col-group">Group</th>
-                            <th class="col-points">Pts</th>
-                        </tr>
-                    </thead>
-                    <tbody>{table_rows_html}</tbody>
-                </table>
+                {html_table}
             </div>
             """,
-            height=320,
+            unsafe_allow_html=True
         )
 
     st.markdown("---")
