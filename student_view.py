@@ -129,21 +129,21 @@ def render_student_view():
                     }}
                     
                     td {{ 
-                        padding: 10px 5px; 
-                        border-bottom: 1px solid rgba(128,128,128,0.1); 
-                        font-size: 13px;
-                        
-                        /* KEY CHANGE: Allow Text Wrapping */
-                        white-space: normal; 
-                        word-wrap: break-word;
-                        vertical-align: middle;
-                        text-align: center;
+                    padding: 8px 4px;              /* tighter */
+                    border-bottom: 1px solid rgba(128,128,128,0.12); 
+                    font-size: 13px;
+                    white-space: normal;
+                    word-wrap: break-word;
+                    vertical-align: middle;
+                    text-align: center;
+                    line-height: 1.3;
                     }}
 
+
                     /* COLUMN WIDTHS OPTIMIZED FOR MOBILE */
-                    .col-rank {{ width: 12%; }}  /* Narrow */
-                    .col-group {{ width: 68%; text-align: left; padding-left: 10px; }} /* Main content */
-                    .col-points {{ width: 20%; font-weight: bold; }}
+                    .col-rank {{ width: 14%; font-size: 12px; }}  /* Narrow */
+                    .col-group {{ width: 66%; text-align: left; padding-left: 8px; font-weight: 600; }} /* Main content */
+                    .col-points {{width: 20%; font-weight: bold; font-size: 14px;}}
                     
                 </style>
                 <table>
@@ -158,7 +158,7 @@ def render_student_view():
                 </table>
             </div>
             """,
-            height=320,
+            height=260,
         )
 
     st.markdown("---")
@@ -231,7 +231,7 @@ def render_student_view():
                         }}
                         
                         /* Optimized Mobile Column Widths */
-                        .col-pos {{ width: 12%; }}
+                        .col-pos {{ width: 14%; font-size: 12px}}
                         .col-name {{ width: 38%; text-align: left; padding-left: 8px; }} /* Give Name maximum space */
                         .col-class {{ width: 20%; }}
                         .col-group {{ width: 30%; }}
