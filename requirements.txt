@@ -1,8 +1,7 @@
-streamlit
+streamlit==1.32.0
 pandas
 gspread
 oauth2client
 google-auth
 google-auth-oauthlib
-streamlit-components
 reportlab
