@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Method: Pandas to_html() + CSS (Stable & Fast)
+# Hybrid: Old Stable Tables + New Fast Speed
 
 import streamlit as st
 import pandas as pd
@@ -18,10 +18,10 @@ GROUP_NAMES_ML = {
 
 def render_student_view():
     
-    # 1. FETCH DATA (Fast Parallel Fetch)
+    # 1. FAST DATA FETCH (Keep this for speed!)
     df, notif_df = fetch_all_student_data()
 
-    # 2. RENDER NOTIFICATIONS
+    # 2. NOTIFICATIONS (Marquee)
     if not notif_df.empty:
         latest_msgs = notif_df.head(5)["Message"].astype(str).tolist()
         running_text = "  🔸  ".join(latest_msgs)
@@ -55,7 +55,8 @@ def render_student_view():
     df_final = df[df["Status"] == "final"]
 
     # ==========================
-    # 🏆 OVERALL POINT TABLE (Method: st.markdown + HTML)
+    # 🏆 OVERALL POINT TABLE
+    # (Restored EXACTLY from your 'student_view old.py')
     # ==========================
     st.subheader("🏆 Overall Point Table")
 
@@ -68,6 +69,7 @@ def render_student_view():
             .reset_index()
             .sort_values(by="Points", ascending=False)
         )
+
         leaderboard.insert(0, "Rank", range(1, len(leaderboard) + 1))
 
         def rank_label(r):
@@ -81,32 +83,33 @@ def render_student_view():
             lambda g: f"{g} – {GROUP_NAMES_ML.get(g, '')}"
         )
 
-        # Generate HTML using Pandas (Robust)
+        # Using Pandas to generate HTML (Stable method from old file)
         html_table = leaderboard[["Rank", "Group", "Points"]].to_html(index=False, escape=False)
 
         st.markdown(
             f"""
             <div style="max-width:900px; margin:auto;">
                 <style>
-                    table {{ width:100%; border-collapse:collapse; table-layout: fixed; }}
+                    table {{ width:100%; border-collapse:collapse; }}
                     th {{
-                        background:#2f2f2f; color:#ffffff; font-weight:bold;
-                        text-align:center !important; padding:10px;
+                        background:#2f2f2f;
+                        color:#ffffff;
+                        font-weight:bold;
+                        text-align:center !important;
+                        padding:10px;
                     }}
                     td {{
-                        text-align:center !important; padding:10px; color:inherit;
-                        word-wrap: break-word; /* Mobile Wrap */
+                        text-align:center !important;
+                        padding:10px;
+                        color:inherit;
                     }}
-                    /* Rank Column Narrow */
-                    th:nth-child(1), td:nth-child(1) {{ width: 20%; }}
-                    /* Points Column Narrow */
-                    th:nth-child(3), td:nth-child(3) {{ width: 20%; font-weight:bold; }}
-                    
                     /* First place highlight */
                     tr:nth-child(1) {{
-                        background:rgba(255,215,0,0.15); font-weight:bold;
+                        background:rgba(255,215,0,0.15);
+                        font-weight:700;
                         border-left:6px solid #f5b301;
                     }}
+                    /* Row Borders */
                     tr{{border-bottom:1px solid rgba(255,215,0,0.15)}}
                 </style>
                 {html_table}
@@ -118,7 +121,8 @@ def render_student_view():
     st.markdown("---")
     
     # ==========================
-    # 🎭 EVENT-WISE RESULTS (Method: to_html + components)
+    # 🎭 EVENT-WISE RESULTS
+    # (Using the 4-Column CSS you pasted + Pandas logic)
     # ==========================
     if not df_final.empty:
         st.subheader("🎭 Event-wise Results")
@@ -132,10 +136,10 @@ def render_student_view():
             event_df = df_final[df_final["Event"] == event_filter]
             event_display_df = event_df[["Position", "Name", "Class", "Group"]]
 
-            # 1. GENERATE HTML TABLE FROM PANDAS (The "Old Method" you liked)
-            html_event_table = event_display_df.to_html(index=False, escape=False, classes="st-table")
+            # Generate basic table HTML
+            html_event_table = event_display_df.to_html(index=False, escape=False)
 
-            # 2. INJECT CSS (With Mobile Fixes)
+            # Inject into your Custom CSS Container
             components.html(
                 f"""
                 <div style="overflow-x: hidden; border-radius: 8px; border: 1px solid rgba(128,128,128,0.2);">
@@ -145,11 +149,11 @@ def render_student_view():
                         
                         body {{ margin: 0; padding: 0; font-family: sans-serif; }}
                         
-                        /* TABLE STYLING */
+                        /* YOUR PASTED CSS (Optimized for Mobile) */
                         table {{
                             width: 100%;
                             border-collapse: collapse;
-                            table-layout: fixed; /* This prevents scrolling! Fit to screen */
+                            table-layout: fixed; /* Fixes width to screen */
                             background-color: var(--bg);
                             color: var(--text);
                         }}
@@ -169,19 +173,21 @@ def render_student_view():
                             padding: 10px 5px;
                             border-bottom: 1px solid rgba(128, 128, 128, 0.1);
                             font-size: 13px;
+                            
+                            /* WRAPPING LOGIC */
                             white-space: normal;
-                            word-wrap: break-word; /* Allows long names to wrap */
+                            word-wrap: break-word;
                         }}
                         
-                        /* COLUMN WIDTH CONTROL */
-                        th:nth-child(1) {{ width: 15%; }} /* Position */
+                        /* SPECIFIC WIDTHS (Matches your 4-column request) */
+                        th:nth-child(1) {{ width: 15%; }} /* Pos */
                         th:nth-child(2) {{ width: 35%; text-align: left; padding-left:10px; }} /* Name */
-                        td:nth-child(2) {{ text-align: left; padding-left:10px; }} /* Align Name Data Left */
+                        td:nth-child(2) {{ text-align: left; padding-left:10px; }}
                         th:nth-child(3) {{ width: 20%; }} /* Class */
                         th:nth-child(4) {{ width: 30%; }} /* Group */
 
-                        /* GOLD HIGHLIGHT FOR FIRST ROW */
-                        tbody tr:first-child {{
+                        /* Gold Highlight for First Place */
+                        tbody tr:nth-child(1) {{
                             background-color: rgba(255, 215, 0, 0.2); 
                             font-weight: bold;
                         }}
