@@ -2,6 +2,10 @@
 # ALOKA DASTAR – Arts Fest App
 
 DATA_FILE = "results.csv"
+SHEET_ID = "1vekDgL4baZuDH9cS0VpORhwIVMIVY3hDEivw9enXq5s"
+RESULTS_SHEET = "results"
+NOTIFICATIONS_SHEET = "notifications"
+
 
 # -------- LOGIN --------
 TEACHER_USERNAME = "teacher"
@@ -52,6 +56,12 @@ OFF_STAGE_EVENTS = [
     "Essay Writing – Hindi",
     "Essay Writing – Arabic",
     "Essay Writing – Sanskrit",
-    "Spot Photography"
+    "Spot Photography",
+    "Speech – Malayalam",
+    "Speech – English",
+    "Speech – Arabic",
+    "Speech – Hindi",
+    "Quiz Competition",
+    "Rangoli"
 ]
-ON_STAGE_EVENTS = []  # add later
+ON_STAGE_EVENTS = ["Group Dance"]  # add later

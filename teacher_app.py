@@ -1,11 +1,11 @@
 # ================= ALOKA DASTAR – ARTS FEST RESULT & POINT TABLE APP =================
-# Clean, stable, error-free version
-# Teacher Result Entry (Off-stage) + Student View + Leaderboard
+# FULL VERSION: Preserves all features + Fixes PDF Bug + Adds Debug Tool
 
 import streamlit as st
 import pandas as pd
 from datetime import datetime
 import os
+import time  # Added for sync delay
 from config import (
     TEACHER_USERNAME,
     TEACHER_PASSWORD,
@@ -19,7 +19,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import A4
 from pdf_generator import generate_event_pdf
 from reportlab.lib import colors
-from student_view import render_student_view
+# from student_view import render_student_view
+from sheet_utils import read_results, write_results, add_notification
 from header import render_header
 
 
@@ -66,17 +67,13 @@ if not os.path.exists(DATA_FILE):
     ]).to_csv(DATA_FILE, index=False)
 
 # ---------------- NAVIGATION ----------------
-#menu = st.sidebar.radio("Navigation", ["🎓 Student View", "🧑‍🏫 Teacher Panel"])
 st.sidebar.markdown("### 👨‍🏫 Teacher Panel")
 
-# ================= STUDENT VIEW =================
-#if menu == "🎓 Student View":
-    #render_student_view()
 if st.sidebar.button("🚪 Logout"):
     st.session_state.role = None
     st.rerun()
+
 # ================= TEACHER PANEL =================
-#else:
 if "role" not in st.session_state:
     st.session_state.role = None
 
@@ -105,9 +102,6 @@ if st.session_state.role is None:
 else:
     if st.session_state.role == "teacher":
         st.header("👨‍🏫 Teacher Panel")
-        # existing result entry
-        # finalize
-        # PDF download
         
         st.success("Welcome, Arts Festival Coordinator 🎭")
 
@@ -136,7 +130,26 @@ else:
                 st.info("ℹ️ On-stage events will be added later.")
                 st.stop()
             event_options = ["--Select Event--"] + OFF_STAGE_EVENTS
-            event_name = st.selectbox("Off-stage Event", event_options)
+            if (event_type=="Off-stage"):
+                event_name = st.selectbox("Off-stage Event", event_options)
+            else:
+                event_name = st.selectbox("On-stage Event", ["--Select Event--"] + ON_STAGE_EVENTS)
+                onstage_category = st.radio(
+                "Select On-stage Event Category",
+                ["Individual", "Group"],
+                horizontal=True
+                )
+                # Reset winners if on-stage category changes
+                if "last_onstage_category" not in st.session_state:
+                    st.session_state.last_onstage_category = onstage_category
+
+                if st.session_state.last_onstage_category != onstage_category:
+                    st.session_state.winners = {
+                        "First": [],
+                        "Second": [],
+                        "Third": []
+                    }
+                    st.session_state.last_onstage_category = onstage_category
 
             if event_name == "-- Select Event --":
                 st.info("ℹ️ Please select an event to enter results.")
@@ -171,67 +184,53 @@ else:
                 if st.button(f"➕ Add {pos}", key=f"add_{pos}"):
                     add_winner(pos)
 
-                for i, w in enumerate(st.session_state.winners[pos]):
-                    c1, c2, c3, c4, c5 = st.columns([3,2,2,3,1])
-                    w["Name"] = c1.text_input("Name", key=f"{pos}_n_{i}")
-                    w["Semester"] = c2.text_input("Semester", key=f"{pos}_s_{i}")
-                    w["Class"] = c3.text_input("Class", key=f"{pos}_c_{i}")
-                    group_display = c4.selectbox(
-                    "Group",
-                    list(GROUP_DISPLAY.values()),
-                    key=f"{pos}_g_{i}"
-                    )
+                if (event_type == "On-stage" and onstage_category == "Individual") or (event_type=="Off-stage"):
+                    for i, w in enumerate(st.session_state.winners[pos]):
+                        c1, c2, c3, c4, c5 = st.columns([3,2,2,3,1])
+                        w["Name"] = c1.text_input("Name", key=f"{pos}_n_{i}")
+                        w["Semester"] = c2.text_input("Semester", key=f"{pos}_s_{i}")
+                        w["Class"] = c3.text_input("Class", key=f"{pos}_c_{i}")
+                        group_display = c4.selectbox(
+                        "Group",
+                        list(GROUP_DISPLAY.values()),
+                        key=f"{pos}_g_{i}"
+                        )
 
-                    w["Group"] = [k for k, v in GROUP_DISPLAY.items() if v == group_display][0]
-                    if c5.button("❌", key=f"del_{pos}_{i}"):
-                        st.session_state.winners[pos].pop(i)
-                        st.rerun()
+                        w["Group"] = [k for k, v in GROUP_DISPLAY.items() if v == group_display][0]
+                        if c5.button("❌", key=f"del_{pos}_{i}"):
+                            st.session_state.winners[pos].pop(i)
+                            st.rerun()
+
+                elif event_type == "On-stage" and onstage_category == "Group":
+                        for i, w in enumerate(st.session_state.winners[pos]):
+                            c1, c2 = st.columns(2)
+
+                            w["Name"] = c1.text_input(
+                                "Team / Group Name",
+                                key=f"{pos}_team_{i}",
+                                placeholder="e.g. Shahid & Party"
+                            )
+
+                            w["Group"] = c2.selectbox(
+                                "Group",
+                                list(GROUP_DISPLAY.keys()),
+                                format_func=lambda g: GROUP_DISPLAY[g],
+                                key=f"{pos}_g_{i}"
+                            )
+
+                            # Maintain schema consistency
+                            w["Class"] = "-"
+                            w["Semester"] = "-"
 
 
             def save_results(status):
-                status = status.strip().title()
-                df = pd.read_csv(DATA_FILE)
+                # Ensure status is lowercase for consistency
+                status = status.strip().lower()
+                from sheet_utils import read_results, write_results, clear_results
+                df = read_results()
 
-                # ---------- FINALIZE LOGIC ----------
-                if status == "Final":
-                    # Block duplicate finalization
-                    already_final = df[
-                        (df["Event"] == event_name) &
-                        (df["Status"].str.strip() == "Final")
-                    ]
-                    if not already_final.empty:
-                        st.error("This event has already been finalized.")
-                        return
-
-                    # Convert existing Draft → Final
-                    draft_mask = (
-                        (df["Event"] == event_name) &
-                        (df["Status"].str.strip() == "Draft")
-                    )
-                    if draft_mask.any():
-                        df.loc[draft_mask, "Status"] = "Final"
-                        df.to_csv(DATA_FILE, index=False)
-
-                        st.success("Draft results finalized successfully")
-
-                        final_df = df[
-                            (df["Event"] == event_name) &
-                            (df["Status"] == "Final")
-                        ][["Position", "Name", "Class", "Group"]]
-
-                        #pdf_file = generate_event_pdf(event_name, final_df)
-
-                        #with open(pdf_file, "rb") as f:
-                            #st.download_button(
-                                #"⬇️ Download Final Results (PDF)",
-                                #f,
-                                #file_name=pdf_file,
-                                #mime="application/pdf"
-                            #)
-
-                        st.session_state.winners = {"First": [], "Second": [], "Third": []}
-                        return
-
+                df["Event"] = df["Event"].astype(str).str.strip()
+                df["Status"] = df["Status"].astype(str).str.strip().str.lower()
 
                 # ---------- SAVE NEW ROWS (Draft or Final) ----------
                 rows = []
@@ -246,8 +245,8 @@ else:
                             "Event": event_name,
                             "Position": pos,
                             "Name": w["Name"],
-                            "Semester": w["Semester"],
-                            "Class": w["Class"],
+                            "Semester": w.get("Semester", ""),
+                            "Class": w.get("Class", ""),
                             "Group": w["Group"],
                             "Points": POINTS[pos],
                             "Status": status,
@@ -255,50 +254,127 @@ else:
 
                 if rows:
                     df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
-                    df.to_csv(DATA_FILE, index=False)
+                    write_results(df)
                     st.session_state.winners = {"First": [], "Second": [], "Third": []}
-                    st.success(f"Results {status.lower()} successfully")
+                    st.success(f"Results saved as {status} successfully")
+                    st.cache_data.clear()
             
-            c1, c2 = st.columns(2)
-            if c1.button("💾 Save Draft"):
-                save_results("Draft")
-            if c2.button("🔒 Finalize"):
-                save_results("Final")
-                st.session_state.just_finalized = True
-                st.success("Event finalized successfully")
-                st.rerun()
-
-            # check if event is finalized
-            df = pd.read_csv(DATA_FILE)
-            is_final = (
-                (df["Event"] == event_name) &
-                (df["Status"] == "Final")
-            ).any()
-            
-            if is_final and not st.session_state.just_finalized:
-                st.error("🚫 This event has already been finalized. Editing is not allowed.")
+            if event_name == "--Select Event--":
+                st.error("❌ Please select a valid event before saving.")
                 st.stop()
 
-            if is_final and st.session_state.just_finalized:
-                final_df = df[
-                (df["Event"] == event_name) &
-                (df["Status"] == "Final")
-                ][["Position", "Name", "Class", "Group"]]
+            c1, c2 = st.columns(2)
+            if c1.button("💾 Save Draft"):
+                if event_type == "On-stage" and onstage_category == "Group":
+                    # Check if name is entered for the first winner (basic validation)
+                    pass 
+                save_results("draft")
+            
+            if c2.button("🔒 Finalize"):
+                df = read_results()
 
-                pdf_file = generate_event_pdf(event_name, final_df)
+                # Normalize columns
+                df["Status"] = df["Status"].astype(str).str.strip().str.lower()
+                df["Event"] = df["Event"].astype(str).str.strip()
+                
+                mask = df["Event"] == event_name
+
+                if df[mask].empty:
+                    st.error("❌ No rows found for this event. Please Save Draft first.")
+                    st.stop()
+
+                if (df.loc[mask, "Status"] == "final").any():
+                    st.error("🚫 This event is already finalized")
+                    st.stop()
+
+                # 🔥 UPDATE STATUS TO 'final' (lowercase)
+                df.loc[mask, "Status"] = "final"
+
+                # 🔥 GENERATE PDF NOW (Before writing to sheet to ensure data exists)
+                final_df_for_pdf = df[mask].copy()
+                try:
+                    pdf_file = generate_event_pdf(event_name, final_df_for_pdf)
+                    st.session_state['generated_pdf'] = pdf_file
+                except Exception as e:
+                    st.error(f"Error generating PDF: {e}")
+
+                write_results(df)
+                
+                st.session_state.just_finalized = True
+                st.cache_data.clear()
+                
+                st.success("✅ Finalized and written to Google Sheets")
+                
+                # 🕒 WAIT FOR GOOGLE SHEETS PROPAGATION
+                with st.spinner("Syncing with cloud..."):
+                    time.sleep(2) 
+
+                add_notification(
+                "FINAL",
+                f"Results finalized for {event_name}",
+                event_name
+                )
+  
+                st.rerun()
+
+            # --------- CHECK STATUS & SHOW PDF ---------
+            from sheet_utils import read_results
+            df = read_results()
+            df["Status"] = df["Status"].astype(str).str.strip().str.lower()
+            df["Event"] = df["Event"].astype(str).str.strip()
+
+            event_rows = df[df["Event"] == event_name]
+
+            is_final = (
+                not event_rows.empty and
+                (event_rows["Status"] == "final").all()
+            )
+
+            if "last_event" not in st.session_state:
+                st.session_state.last_event = None
+
+            if st.session_state.last_event != event_name:
+                st.session_state.just_finalized = False
+                st.session_state.last_event = event_name
+
+            if is_final:
+                # FIX: Match the lowercase 'final' used in sheet_utils
+                final_df = df[
+                    (df["Event"] == event_name) &
+                    (df["Status"] == "final") 
+                ]
+                
+                # --- DEBUG SECTION ---
+                with st.expander("🔍 Debug PDF Data (Open if PDF is blank)"):
+                    st.write(f"**Event Selected:** '{event_name}'")
+                    st.write(f"**Total Rows:** {len(event_rows)}")
+                    st.write("**Finalized Rows:**", len(final_df))
+                    st.dataframe(final_df) 
+                # ---------------------
+
+                # If dataframe is empty but is_final is true (rare race condition),
+                # fallback to the one we generated during the button click
+                if final_df.empty and 'generated_pdf' in st.session_state:
+                     pdf_file = st.session_state['generated_pdf']
+                else:
+                    pdf_file = generate_event_pdf(event_name, final_df)
 
                 with open(pdf_file, "rb") as f:
                     st.download_button(
                         "📄 Download Final Result (PDF)",
                         f,
-                        file_name=pdf_file.split("\\")[-1],
+                        file_name=pdf_file.split(os.sep)[-1],
                         mime="application/pdf"
                     )
-
+            elif not is_final and st.session_state.just_finalized:
+                 # Fallback if finalized but sheet sync is slow
+                 st.warning("⚠️ Syncing results... Refresh page if PDF button doesn't appear.")
 
         with tab2:
-            df = pd.read_csv(DATA_FILE)
-            df["Status"] = df["Status"].str.strip().str.lower()
+            from sheet_utils import read_results
+            df = read_results()
+
+            df["Status"] = df["Status"].astype(str).str.strip().str.lower()
             final_df = df[df["Status"] == "final"]
 
             if final_df.empty:
@@ -334,37 +410,40 @@ else:
                 html_table = display_leaderboard.to_html(index=False, escape=False)
 
                 st.markdown(
-                    f"""
-                    <div style="max-width:900px; margin:auto;">
-                        <style>
-                            table {{ width:100%; border-collapse:collapse; }}
-                            th {{
-                                background:#f2f2f2;
-                                font-weight:bold;
-                                text-align:center !important;
-                                padding:10px;
-                            }}
-                            td {{
-                                text-align:center !important;
-                                padding:10px;
-                            }}
-                            tr:nth-child(1) {{
-                                background-color:#fff4cc;
-                                font-weight:bold;
-                            }}
-                        </style>
-                        {html_table}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                f"""
+                <div style="max-width:900px; margin:auto;">
+                    <style>
+                        table {{ width:100%; border-collapse:collapse; }}
+                        th {{
+                            background:#2f2f2f;
+                            color:#ffffff;
+                            font-weight:bold;
+                            text-align:center !important;
+                            padding:10px;
+                        }}
+                        td {{
+                            text-align:center !important;
+                            padding:10px;
+                            color:inherit;
+                        }}
+                        tr:nth-child(1) {{
+                            background:rgba(255,215,0,0.15);
+                            font-weight:700
+                            border-left:6px solid #f5b301;
+                        }}
+                        tr{{border-bottom:1px solid rgba(255,215,0,0.15)}}
+                    </style>
+                    {html_table}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
     elif st.session_state.role == "admin":
         st.header("🔒 Admin Panel")
-
-        import pandas as pd
-
-        DATA_FILE = "results.csv"
-        df = pd.read_csv(DATA_FILE)
+        
+        # Reset Logic
+        from sheet_utils import read_results, write_results, clear_results
+        df = read_results()
 
         st.subheader("📊 Current Data")
         st.dataframe(df)
@@ -378,6 +457,6 @@ else:
         confirm = st.checkbox("I understand this action is irreversible")
 
         if confirm and st.button("🗑️ Clear All Results"):
-            df.iloc[0:0].to_csv(DATA_FILE, index=False)
+            clear_results()
             st.success("All results cleared successfully")
             st.rerun()

@@ -1,0 +1,13 @@
+# Secrets
+*.json
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local data files
+results.csv
+
+# Generated files
+*.pdf
