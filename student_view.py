@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Ultimate Mobile View: Merged Columns for Clean Layout
+# Method: Pandas to_html() + CSS (Stable & Fast)
 
 import streamlit as st
 import pandas as pd
@@ -18,7 +18,7 @@ GROUP_NAMES_ML = {
 
 def render_student_view():
     
-    # 1. FETCH DATA
+    # 1. FETCH DATA (Fast Parallel Fetch)
     df, notif_df = fetch_all_student_data()
 
     # 2. RENDER NOTIFICATIONS
@@ -55,14 +55,13 @@ def render_student_view():
     df_final = df[df["Status"] == "final"]
 
     # ==========================
-    # 🏆 OVERALL POINT TABLE
+    # 🏆 OVERALL POINT TABLE (Method: st.markdown + HTML)
     # ==========================
     st.subheader("🏆 Overall Point Table")
 
     if df_final.empty:
         st.info("🎭 Results will appear here once events are finalized. Please check back soon.")
     else:
-        # Calculate scores
         leaderboard = (
             df_final.groupby("Group")["Points"]
             .sum()
@@ -71,58 +70,43 @@ def render_student_view():
         )
         leaderboard.insert(0, "Rank", range(1, len(leaderboard) + 1))
 
-        # Build HTML Rows
-        table_rows_html = ""
-        for _, row in leaderboard.iterrows():
-            rank = row["Rank"]
-            group_key = row["Group"]
-            points = row["Points"]
-            
-            group_display = f"{group_key} – {GROUP_NAMES_ML.get(group_key, '')}"
+        def rank_label(r):
+            if r == 1: return "🥇 1st"
+            elif r == 2: return "🥈 2nd"
+            elif r == 3: return "🥉 3rd"
+            else: return f"{r}th"
 
-            if rank == 1: rank_display = "🥇 1st"
-            elif rank == 2: rank_display = "🥈 2nd"
-            elif rank == 3: rank_display = "🥉 3rd"
-            else: rank_display = f"{rank}th"
+        leaderboard["Rank"] = leaderboard["Rank"].apply(rank_label)
+        leaderboard["Group"] = leaderboard["Group"].apply(
+            lambda g: f"{g} – {GROUP_NAMES_ML.get(g, '')}"
+        )
 
-            # Style for Top 3
-            row_style = ""
-            if rank == 1:
-                row_style = 'style="background-color: rgba(255, 215, 0, 0.2); font-weight: bold; border-left: 5px solid #ffc107;"'
-            
-            table_rows_html += f"""
-            <tr {row_style}>
-                <td class="col-rank">{rank_display}</td>
-                <td class="col-group">{group_display}</td>
-                <td class="col-points">{points}</td>
-            </tr>
-            """
+        # Generate HTML using Pandas (Robust)
+        html_table = leaderboard[["Rank", "Group", "Points"]].to_html(index=False, escape=False)
 
-        # Render Table
         st.markdown(
             f"""
             <div style="max-width:900px; margin:auto;">
                 <style>
-                    table {{ width:100%; border-collapse:collapse; }}
+                    table {{ width:100%; border-collapse:collapse; table-layout: fixed; }}
                     th {{
-                        background:#2f2f2f;
-                        color:#ffffff;
-                        font-weight:bold;
-                        text-align:center !important;
-                        padding:10px;
+                        background:#2f2f2f; color:#ffffff; font-weight:bold;
+                        text-align:center !important; padding:10px;
                     }}
                     td {{
-                        text-align:center !important;
-                        padding:10px;
-                        color:inherit;
+                        text-align:center !important; padding:10px; color:inherit;
+                        word-wrap: break-word; /* Mobile Wrap */
                     }}
-                    /* First place highlight – mode safe */
+                    /* Rank Column Narrow */
+                    th:nth-child(1), td:nth-child(1) {{ width: 20%; }}
+                    /* Points Column Narrow */
+                    th:nth-child(3), td:nth-child(3) {{ width: 20%; font-weight:bold; }}
+                    
+                    /* First place highlight */
                     tr:nth-child(1) {{
-                        background:rgba(255,215,0,0.15);
-                        font-weight:700
+                        background:rgba(255,215,0,0.15); font-weight:bold;
                         border-left:6px solid #f5b301;
                     }}
-                    /* Row Borders for clarity*/
                     tr{{border-bottom:1px solid rgba(255,215,0,0.15)}}
                 </style>
                 {html_table}
@@ -134,7 +118,7 @@ def render_student_view():
     st.markdown("---")
     
     # ==========================
-    # 🎭 EVENT-WISE RESULTS (MERGED COLUMNS)
+    # 🎭 EVENT-WISE RESULTS (Method: to_html + components)
     # ==========================
     if not df_final.empty:
         st.subheader("🎭 Event-wise Results")
@@ -148,85 +132,64 @@ def render_student_view():
             event_df = df_final[df_final["Event"] == event_filter]
             event_display_df = event_df[["Position", "Name", "Class", "Group"]]
 
-            table_rows_html = ""
-            for _, row in event_display_df.iterrows():
-                is_first = str(row['Position']).strip().lower() == "first"
-                row_style = 'style="background-color: rgba(255, 215, 0, 0.25); font-weight: bold;"' if is_first else ""
-                
-                # --- MERGE LOGIC ---
-                # We combine Class and Group into one cell
-                # Format: "BCom CA <br> Group 5"
-                details_html = f"""
-                <span style="font-weight:600; font-size:13px;">{row['Class']}</span><br>
-                <span style="font-size:11px; opacity:0.8;">{row['Group']}</span>
-                """
+            # 1. GENERATE HTML TABLE FROM PANDAS (The "Old Method" you liked)
+            html_event_table = event_display_df.to_html(index=False, escape=False, classes="st-table")
 
-                table_rows_html += f"""
-                <tr {row_style}>
-                    <td class="col-pos">{row['Position']}</td>
-                    <td class="col-name">{row['Name']}</td>
-                    <td class="col-details">{details_html}</td>
-                </tr>
-                """
-
+            # 2. INJECT CSS (With Mobile Fixes)
             components.html(
                 f"""
-                <div style="overflow-x: hidden; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2);">
+                <div style="overflow-x: hidden; border-radius: 8px; border: 1px solid rgba(128,128,128,0.2);">
                     <style>
                         :root {{ --bg: #ffffff; --text: #1a1a1a; --header-bg: #f8f9fa; }}
                         @media (prefers-color-scheme: dark) {{ :root {{ --bg: #0e1117; --text: #fafafa; --header-bg: #1d2129; }} }}
+                        
                         body {{ margin: 0; padding: 0; font-family: sans-serif; }}
                         
-                        table {{ 
-                            width: 100%; 
-                            table-layout: fixed; 
-                            border-collapse: collapse; 
-                            background-color: var(--bg); 
+                        /* TABLE STYLING */
+                        table {{
+                            width: 100%;
+                            border-collapse: collapse;
+                            table-layout: fixed; /* This prevents scrolling! Fit to screen */
+                            background-color: var(--bg);
                             color: var(--text);
                         }}
                         
-                        th {{ 
-                            background-color: var(--header-bg); 
-                            padding: 10px 4px; 
-                            font-weight: bold; 
-                            border-bottom: 2px solid rgba(128,128,128,0.3); 
-                            font-size: 12px; 
+                        th {{
+                            background-color: var(--header-bg);
+                            color: var(--text);
+                            font-weight: bold;
                             text-align: center;
+                            padding: 12px 5px;
+                            border-bottom: 2px solid rgba(128, 128, 128, 0.3);
+                            font-size: 13px;
                         }}
                         
-                        td {{ 
-                            padding: 8px 6px; 
-                            text-align: center; 
-                            border-bottom: 1px solid rgba(128,128,128,0.1); 
-                            font-size: 13px; 
+                        td {{
+                            text-align: center;
+                            padding: 10px 5px;
+                            border-bottom: 1px solid rgba(128, 128, 128, 0.1);
+                            font-size: 13px;
                             white-space: normal;
-                            word-wrap: break-word;
-                            vertical-align: middle;
+                            word-wrap: break-word; /* Allows long names to wrap */
                         }}
                         
-                        /* === OPTIMIZED 3-COLUMN LAYOUT === */
-                        .col-pos {{ width: 15%; font-weight:bold; }}
-                        
-                        /* Name gets 50% width! Huge space improvement */
-                        .col-name {{ width: 50%; text-align: left; padding-left: 10px; font-size: 14px; }} 
-                        
-                        .col-details {{ width: 35%; line-height: 1.2; }}
-                        
-                        /* Header Alignment matches Data */
-                        th:nth-child(2) {{ text-align: left; padding-left: 10px; }}
-                        
+                        /* COLUMN WIDTH CONTROL */
+                        th:nth-child(1) {{ width: 15%; }} /* Position */
+                        th:nth-child(2) {{ width: 35%; text-align: left; padding-left:10px; }} /* Name */
+                        td:nth-child(2) {{ text-align: left; padding-left:10px; }} /* Align Name Data Left */
+                        th:nth-child(3) {{ width: 20%; }} /* Class */
+                        th:nth-child(4) {{ width: 30%; }} /* Group */
+
+                        /* GOLD HIGHLIGHT FOR FIRST ROW */
+                        tbody tr:first-child {{
+                            background-color: rgba(255, 215, 0, 0.2); 
+                            font-weight: bold;
+                        }}
                     </style>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Pos</th>
-                                <th>Name</th>
-                                <th>Details</th>
-                            </tr>
-                        </thead>
-                        <tbody>{table_rows_html}</tbody>
-                    </table>
+                    
+                    {html_event_table}
+                    
                 </div>
                 """,
-                height=350,
+                height=400, 
             )
