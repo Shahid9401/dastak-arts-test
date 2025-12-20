@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Mobile Optimized: Fit-to-Screen (No Scroll)
+# Ultimate Mobile View: Merged Columns for Clean Layout
 
 import streamlit as st
 import pandas as pd
@@ -114,36 +114,33 @@ def render_student_view():
                         border-collapse: collapse; 
                         background-color: var(--bg); 
                         color: var(--text); 
-                        /* REMOVED MIN-WIDTH TO PREVENT SCROLLING */
                     }}
                     
                     th {{ 
                         background-color: var(--header-bg); 
                         color: var(--text); 
-                        padding: 12px 5px; /* Reduced Padding */
+                        padding: 12px 5px;
                         font-weight: bold; 
                         border-bottom: 2px solid rgba(128,128,128,0.3);
-                        font-size: 13px; /* Slightly smaller for mobile */
+                        font-size: 13px;
                         text-transform: uppercase;
                         text-align: center;
                     }}
                     
                     td {{ 
-                    padding: 8px 4px;              /* tighter */
-                    border-bottom: 1px solid rgba(128,128,128,0.12); 
-                    font-size: 13px;
-                    white-space: normal;
-                    word-wrap: break-word;
-                    vertical-align: middle;
-                    text-align: center;
-                    line-height: 1.3;
+                        padding: 10px 5px; 
+                        border-bottom: 1px solid rgba(128,128,128,0.1); 
+                        font-size: 13px;
+                        white-space: normal; 
+                        word-wrap: break-word;
+                        vertical-align: middle;
+                        text-align: center;
                     }}
 
-
-                    /* COLUMN WIDTHS OPTIMIZED FOR MOBILE */
-                    .col-rank {{ width: 14%; font-size: 12px; }}  /* Narrow */
-                    .col-group {{ width: 66%; text-align: left; padding-left: 8px; font-weight: 600; }} /* Main content */
-                    .col-points {{width: 20%; font-weight: bold; font-size: 14px;}}
+                    /* COLUMN WIDTHS */
+                    .col-rank {{ width: 15%; }}
+                    .col-group {{ width: 65%; text-align: left; padding-left: 10px; }}
+                    .col-points {{ width: 20%; font-weight: bold; }}
                     
                 </style>
                 <table>
@@ -158,13 +155,13 @@ def render_student_view():
                 </table>
             </div>
             """,
-            height=260,
+            height=320,
         )
 
     st.markdown("---")
     
     # ==========================
-    # 🎭 EVENT-WISE RESULTS
+    # 🎭 EVENT-WISE RESULTS (MERGED COLUMNS)
     # ==========================
     if not df_final.empty:
         st.subheader("🎭 Event-wise Results")
@@ -183,12 +180,19 @@ def render_student_view():
                 is_first = str(row['Position']).strip().lower() == "first"
                 row_style = 'style="background-color: rgba(255, 215, 0, 0.25); font-weight: bold;"' if is_first else ""
                 
+                # --- MERGE LOGIC ---
+                # We combine Class and Group into one cell
+                # Format: "BCom CA <br> Group 5"
+                details_html = f"""
+                <span style="font-weight:600; font-size:13px;">{row['Class']}</span><br>
+                <span style="font-size:11px; opacity:0.8;">{row['Group']}</span>
+                """
+
                 table_rows_html += f"""
                 <tr {row_style}>
                     <td class="col-pos">{row['Position']}</td>
                     <td class="col-name">{row['Name']}</td>
-                    <td class="col-class">{row['Class']}</td>
-                    <td class="col-group">{row['Group']}</td>
+                    <td class="col-details">{details_html}</td>
                 </tr>
                 """
 
@@ -206,7 +210,6 @@ def render_student_view():
                             border-collapse: collapse; 
                             background-color: var(--bg); 
                             color: var(--text);
-                            /* REMOVED MIN-WIDTH FOR MOBILE FIT */
                         }}
                         
                         th {{ 
@@ -214,30 +217,30 @@ def render_student_view():
                             padding: 10px 4px; 
                             font-weight: bold; 
                             border-bottom: 2px solid rgba(128,128,128,0.3); 
-                            font-size: 12px; /* Smaller header font */
+                            font-size: 12px; 
                             text-align: center;
                         }}
                         
                         td {{ 
-                            padding: 8px 4px; 
+                            padding: 8px 6px; 
                             text-align: center; 
                             border-bottom: 1px solid rgba(128,128,128,0.1); 
-                            font-size: 13px; /* Readable data font */
-                            
-                            /* ENABLE WRAPPING */
+                            font-size: 13px; 
                             white-space: normal;
                             word-wrap: break-word;
                             vertical-align: middle;
                         }}
                         
-                        /* Optimized Mobile Column Widths */
-                        .col-pos {{ width: 14%; font-size: 12px}}
-                        .col-name {{ width: 38%; text-align: left; padding-left: 8px; }} /* Give Name maximum space */
-                        .col-class {{ width: 20%; }}
-                        .col-group {{ width: 30%; }}
+                        /* === OPTIMIZED 3-COLUMN LAYOUT === */
+                        .col-pos {{ width: 15%; font-weight:bold; }}
+                        
+                        /* Name gets 50% width! Huge space improvement */
+                        .col-name {{ width: 50%; text-align: left; padding-left: 10px; font-size: 14px; }} 
+                        
+                        .col-details {{ width: 35%; line-height: 1.2; }}
                         
                         /* Header Alignment matches Data */
-                        th:nth-child(2) {{ text-align: left; padding-left: 8px; }}
+                        th:nth-child(2) {{ text-align: left; padding-left: 10px; }}
                         
                     </style>
                     <table>
@@ -245,8 +248,7 @@ def render_student_view():
                             <tr>
                                 <th>Pos</th>
                                 <th>Name</th>
-                                <th>Class</th>
-                                <th>Group</th>
+                                <th>Details</th>
                             </tr>
                         </thead>
                         <tbody>{table_rows_html}</tbody>
