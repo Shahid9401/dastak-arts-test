@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Final Polish: Centered Layout for "Podium" Look
+# Mobile Optimized: Fit-to-Screen (No Scroll)
 
 import streamlit as st
 import pandas as pd
@@ -101,7 +101,7 @@ def render_student_view():
         # Render Table
         components.html(
             f"""
-            <div style="overflow-x: auto; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2);">
+            <div style="overflow-x: hidden; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2);">
                 <style>
                     :root {{ --bg: #ffffff; --text: #1a1a1a; --header-bg: #f8f9fa; }}
                     @media (prefers-color-scheme: dark) {{ :root {{ --bg: #0e1117; --text: #fafafa; --header-bg: #1d2129; }} }}
@@ -114,33 +114,35 @@ def render_student_view():
                         border-collapse: collapse; 
                         background-color: var(--bg); 
                         color: var(--text); 
-                        min-width: 400px; /* Ensures table doesn't get too squashed on tiny phones */
+                        /* REMOVED MIN-WIDTH TO PREVENT SCROLLING */
                     }}
                     
                     th {{ 
                         background-color: var(--header-bg); 
                         color: var(--text); 
-                        padding: 12px 10px; 
+                        padding: 12px 5px; /* Reduced Padding */
                         font-weight: bold; 
                         border-bottom: 2px solid rgba(128,128,128,0.3);
-                        font-size: 14px;
+                        font-size: 13px; /* Slightly smaller for mobile */
                         text-transform: uppercase;
-                        letter-spacing: 0.5px;
-                        text-align: center; /* Force Header Center */
+                        text-align: center;
                     }}
                     
                     td {{ 
-                        padding: 12px 10px; 
+                        padding: 10px 5px; 
                         border-bottom: 1px solid rgba(128,128,128,0.1); 
-                        white-space: nowrap; 
-                        overflow: hidden; 
-                        text-overflow: ellipsis; 
-                        text-align: center; /* Force Data Center */
+                        font-size: 13px;
+                        
+                        /* KEY CHANGE: Allow Text Wrapping */
+                        white-space: normal; 
+                        word-wrap: break-word;
+                        vertical-align: middle;
+                        text-align: center;
                     }}
 
-                    /* COLUMN WIDTHS */
-                    .col-rank {{ width: 15%; }}
-                    .col-group {{ width: 65%; }}
+                    /* COLUMN WIDTHS OPTIMIZED FOR MOBILE */
+                    .col-rank {{ width: 12%; }}  /* Narrow */
+                    .col-group {{ width: 68%; text-align: left; padding-left: 10px; }} /* Main content */
                     .col-points {{ width: 20%; font-weight: bold; }}
                     
                 </style>
@@ -149,7 +151,7 @@ def render_student_view():
                         <tr>
                             <th class="col-rank">Rank</th>
                             <th class="col-group">Group</th>
-                            <th class="col-points">Points</th>
+                            <th class="col-points">Pts</th>
                         </tr>
                     </thead>
                     <tbody>{table_rows_html}</tbody>
@@ -192,7 +194,7 @@ def render_student_view():
 
             components.html(
                 f"""
-                <div style="overflow-x: auto; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2);">
+                <div style="overflow-x: hidden; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2);">
                     <style>
                         :root {{ --bg: #ffffff; --text: #1a1a1a; --header-bg: #f8f9fa; }}
                         @media (prefers-color-scheme: dark) {{ :root {{ --bg: #0e1117; --text: #fafafa; --header-bg: #1d2129; }} }}
@@ -204,25 +206,44 @@ def render_student_view():
                             border-collapse: collapse; 
                             background-color: var(--bg); 
                             color: var(--text);
-                            min-width: 500px; /* Allows scrolling on mobile */
+                            /* REMOVED MIN-WIDTH FOR MOBILE FIT */
                         }}
                         
-                        th {{ background-color: var(--header-bg); padding: 12px; font-weight: bold; border-bottom: 2px solid rgba(128,128,128,0.3); text-align: center; }}
-                        td {{ padding: 12px 8px; text-align: center; border-bottom: 1px solid rgba(128,128,128,0.1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+                        th {{ 
+                            background-color: var(--header-bg); 
+                            padding: 10px 4px; 
+                            font-weight: bold; 
+                            border-bottom: 2px solid rgba(128,128,128,0.3); 
+                            font-size: 12px; /* Smaller header font */
+                            text-align: center;
+                        }}
                         
-                        /* Alignment for Event Table */
-                        .col-pos {{ width: 15%; }}
-                        .col-name {{ width: 35%; text-align: left; padding-left: 15px; }} /* Keep Name Left for readability */
+                        td {{ 
+                            padding: 8px 4px; 
+                            text-align: center; 
+                            border-bottom: 1px solid rgba(128,128,128,0.1); 
+                            font-size: 13px; /* Readable data font */
+                            
+                            /* ENABLE WRAPPING */
+                            white-space: normal;
+                            word-wrap: break-word;
+                            vertical-align: middle;
+                        }}
+                        
+                        /* Optimized Mobile Column Widths */
+                        .col-pos {{ width: 12%; }}
+                        .col-name {{ width: 38%; text-align: left; padding-left: 8px; }} /* Give Name maximum space */
                         .col-class {{ width: 20%; }}
                         .col-group {{ width: 30%; }}
                         
-                        /* Align Header to Data */
-                        th:nth-child(2) {{ text-align: left; padding-left: 15px; }}
+                        /* Header Alignment matches Data */
+                        th:nth-child(2) {{ text-align: left; padding-left: 8px; }}
+                        
                     </style>
                     <table>
                         <thead>
                             <tr>
-                                <th>Position</th>
+                                <th>Pos</th>
                                 <th>Name</th>
                                 <th>Class</th>
                                 <th>Group</th>
