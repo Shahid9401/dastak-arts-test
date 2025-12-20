@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Hybrid: Old Stable Tables + New Fast Speed + Mobile Fix
+# Hybrid: Old Stable Tables + New Fast Speed + Compact Event View + Stacked Groups
 
 import streamlit as st
 import pandas as pd
@@ -106,7 +106,7 @@ def render_student_view():
                     /* First place highlight */
                     tr:nth-child(1) {{
                         background:rgba(255,215,0,0.15);
-                        font-weight:700; /* Fixed missing semicolon here */
+                        font-weight:700;
                         border-left:6px solid #f5b301;
                     }}
                     /* Row Borders */
@@ -122,7 +122,7 @@ def render_student_view():
     
     # ==========================
     # 🎭 EVENT-WISE RESULTS
-    # (Using the 4-Column CSS you pasted + Pandas logic)
+    # (Modified: Stacked Group Names + Smaller Font)
     # ==========================
     if not df_final.empty:
         st.subheader("🎭 Event-wise Results")
@@ -136,25 +136,31 @@ def render_student_view():
             event_df = df_final[df_final["Event"] == event_filter]
             event_display_df = event_df[["Position", "Name", "Class", "Group"]]
 
-            # 1. Build rows manually to avoid the 'Double Header' issue
+            # 1. Build rows manually 
             table_rows_html = ""
             for _, row in event_display_df.iterrows():
-                # Highlight First Place with a subtle gold
                 is_first = str(row['Position']).strip().lower() == "first"
                 row_style = 'style="background-color: rgba(255, 215, 0, 0.25); font-weight: 600;"' if is_first else ""
                 
+                # --- NEW LOGIC: Stacked Group Name ---
+                # Example: "Group 1 <br> (Kocheri)"
+                g_id = row['Group']
+                g_name = GROUP_NAMES_ML.get(g_id, "")
+                # Create HTML for stacked display (ID bold, Name small/grey)
+                group_html = f"<span>{g_id}</span><br><span style='font-size:0.85em; opacity:0.75;'>{g_name}</span>"
+
                 table_rows_html += f"""
                 <tr {row_style}>
                     <td>{row['Position']}</td>
                     <td>{row['Name']}</td>
                     <td>{row['Class']}</td>
-                    <td>{row['Group']}</td>
+                    <td>{group_html}</td>
                 </tr>
                 """
 
             import streamlit.components.v1 as components
 
-            # 2. Render with THEME-AWARE CSS
+            # 2. Render with COMPACT CSS
             components.html(
                 f"""
                 <div style="overflow-x: auto; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2);">
@@ -165,7 +171,6 @@ def render_student_view():
                             --header-bg: #f8f9fa;
                         }}
                         
-                        /* This detects if the user's phone is in Dark Mode */
                         @media (prefers-color-scheme: dark) {{
                             :root {{
                                 --bg: #0e1117;
@@ -184,14 +189,17 @@ def render_student_view():
                         th {{
                             background-color: var(--header-bg);
                             color: var(--text);
-                            padding: 12px;
+                            padding: 10px; /* Reduced Header Padding */
                             font-weight: bold;
                             border-bottom: 2px solid rgba(128,128,128,0.3);
+                            font-size: 14px; /* Reduced Header Font */
                         }}
                         td {{
-                            padding: 12px 8px;
+                            padding: 10px 6px; /* Reduced Cell Padding */
                             text-align: center;
                             border-bottom: 1px solid rgba(128,128,128,0.1);
+                            font-size: 14px; /* Reduced Cell Font */
+                            line-height: 1.4; /* Better spacing for stacked text */
                         }}
                     </style>
                     <table>
