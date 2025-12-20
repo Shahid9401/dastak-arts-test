@@ -136,67 +136,78 @@ def render_student_view():
             event_df = df_final[df_final["Event"] == event_filter]
             event_display_df = event_df[["Position", "Name", "Class", "Group"]]
 
-            # Generate basic table HTML
-            html_event_table = event_display_df.to_html(index=False, escape=False)
+            # 1. Build rows manually to avoid the 'Double Header' issue
+            table_rows_html = ""
+            for _, row in event_display_df.iterrows():
+                # Highlight First Place with a subtle gold
+                is_first = str(row['Position']).strip().lower() == "first"
+                row_style = 'style="background-color: rgba(255, 215, 0, 0.25); font-weight: 600;"' if is_first else ""
+                
+                table_rows_html += f"""
+                <tr {row_style}>
+                    <td>{row['Position']}</td>
+                    <td>{row['Name']}</td>
+                    <td>{row['Class']}</td>
+                    <td>{row['Group']}</td>
+                </tr>
+                """
 
-            # Inject into Custom CSS Container (Iframe)
-            # This isolates the table so Streamlit won't break it
+            import streamlit.components.v1 as components
+
+            # 2. Render with THEME-AWARE CSS
             components.html(
                 f"""
-                <div style="overflow-x: hidden; border-radius: 8px; border: 1px solid rgba(128,128,128,0.2);">
+                <div style="overflow-x: auto; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2);">
                     <style>
-                        :root {{ --bg: #ffffff; --text: #1a1a1a; --header-bg: #f8f9fa; }}
-                        @media (prefers-color-scheme: dark) {{ :root {{ --bg: #0e1117; --text: #fafafa; --header-bg: #1d2129; }} }}
+                        :root {{
+                            --bg: #ffffff;
+                            --text: #1a1a1a;
+                            --header-bg: #f8f9fa;
+                        }}
                         
-                        body {{ margin: 0; padding: 0; font-family: sans-serif; }}
-                        
-                        /* YOUR PASTED CSS (Optimized for Mobile) */
+                        /* This detects if the user's phone is in Dark Mode */
+                        @media (prefers-color-scheme: dark) {{
+                            :root {{
+                                --bg: #0e1117;
+                                --text: #fafafa;
+                                --header-bg: #1d2129;
+                            }}
+                        }}
+
                         table {{
                             width: 100%;
                             border-collapse: collapse;
-                            table-layout: fixed; /* Fixes width to screen */
+                            font-family: -apple-system, system-ui, sans-serif;
                             background-color: var(--bg);
                             color: var(--text);
                         }}
-                        
                         th {{
                             background-color: var(--header-bg);
                             color: var(--text);
+                            padding: 12px;
                             font-weight: bold;
-                            text-align: center;
-                            padding: 12px 5px;
-                            border-bottom: 2px solid rgba(128, 128, 128, 0.3);
-                            font-size: 13px;
+                            border-bottom: 2px solid rgba(128,128,128,0.3);
                         }}
-                        
                         td {{
+                            padding: 12px 8px;
                             text-align: center;
-                            padding: 10px 5px;
-                            border-bottom: 1px solid rgba(128, 128, 128, 0.1);
-                            font-size: 13px;
-                            
-                            /* WRAPPING LOGIC */
-                            white-space: normal;
-                            word-wrap: break-word;
-                        }}
-                        
-                        /* SPECIFIC WIDTHS (Matches your 4-column request) */
-                        th:nth-child(1) {{ width: 15%; }} /* Pos */
-                        th:nth-child(2) {{ width: 35%; text-align: left; padding-left:10px; }} /* Name */
-                        td:nth-child(2) {{ text-align: left; padding-left:10px; }}
-                        th:nth-child(3) {{ width: 20%; }} /* Class */
-                        th:nth-child(4) {{ width: 30%; }} /* Group */
-
-                        /* Gold Highlight for First Place */
-                        tbody tr:nth-child(1) {{
-                            background-color: rgba(255, 215, 0, 0.2); 
-                            font-weight: bold;
+                            border-bottom: 1px solid rgba(128,128,128,0.1);
                         }}
                     </style>
-                    
-                    {html_event_table}
-                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Name</th>
+                                <th>Class</th>
+                                <th>Group</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {table_rows_html}
+                        </tbody>
+                    </table>
                 </div>
                 """,
-                height=400, 
+                height=350,
             )
