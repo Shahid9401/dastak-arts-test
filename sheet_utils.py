@@ -12,8 +12,8 @@ SCOPES = [
 ]
 
 def get_client():
-    creds = Credentials.from_service_account_file(
-        "service_account.json", scopes=SCOPES
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=SCOPES
     )
     return gspread.authorize(creds)
 
