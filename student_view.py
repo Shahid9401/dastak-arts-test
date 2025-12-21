@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Features: Stable Tables + Fast Speed + Clean UI + No Mobile Keyboard (Expander Fix)
+# Features: Stable Tables + Fast Speed + Clean UI + Smart Expander Label
 
 import streamlit as st
 import pandas as pd
@@ -135,21 +135,35 @@ def render_student_view():
     
     # ==========================
     # 🎭 EVENT-WISE RESULTS
-    # (Replaced Selectbox with Expander + Radio)
+    # (Smart Expander: Shows selected event in title)
     # ==========================
     if not df_final.empty:
         st.subheader("🎭 Event-wise Results")
 
-        # --- FIX: USE EXPANDER + RADIO INSTEAD OF SELECTBOX ---
-        # This prevents the mobile keyboard from popping up!
         event_list = ["-- Select Event --"] + sorted(df_final["Event"].unique().tolist())
         
-        with st.expander("📂 Tap here to Select Event", expanded=False):
+        # --- NEW LOGIC START: Smart Label ---
+        # 1. Initialize session state if clean
+        if "selected_event_key" not in st.session_state:
+            st.session_state.selected_event_key = "-- Select Event --"
+
+        # 2. Decide what the Label should say based on current memory
+        current_selection = st.session_state.selected_event_key
+        if current_selection == "-- Select Event --":
+            expander_label = "📂 Tap here to Select Event"
+        else:
+            expander_label = f"📂 Selected: {current_selection}"
+
+        # 3. Draw Expander with dynamic label
+        with st.expander(expander_label, expanded=False):
+            # 4. The Radio Button updates the memory ('key') automatically
             event_filter = st.radio(
                 "Choose an event:",
                 options=event_list,
+                key="selected_event_key", # <--- This binds it to the memory
                 label_visibility="collapsed"
             )
+        # --- NEW LOGIC END ---
 
         if event_filter != "-- Select Event --":
             event_df = df_final[df_final["Event"] == event_filter]
