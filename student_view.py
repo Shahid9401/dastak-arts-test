@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Features: Stable Tables + Fast Speed + Clean UI (Hidden Toolbar)
+# Features: Stable Tables + Fast Speed + Clean UI (Nuclear Fix for Toolbar)
 
 import streamlit as st
 import pandas as pd
@@ -18,24 +18,45 @@ GROUP_NAMES_ML = {
 
 def render_student_view():
     
-    # --- 1. CLEAN MODE CSS (Hides Streamlit Toolbar & Footer) ---
+    # --- 1. CLEAN MODE CSS (NUCLEAR OPTION) ---
     st.markdown("""
         <style>
             /* Hide the top "hamburger" menu */
-            #MainMenu {visibility: hidden;}
-            
-            /* Hide the "Made with Streamlit" footer */
-            footer {visibility: hidden;}
+            #MainMenu {
+                visibility: hidden;
+                display: none;
+            }
             
             /* Hide the top header bar */
-            header {visibility: hidden;}
+            header {
+                visibility: hidden;
+                display: none;
+            }
+            [data-testid="stHeader"] {
+                visibility: hidden;
+                display: none;
+            }
             
-            /* Hide the "Manage App" / "Crown" button at bottom right */
-            [data-testid="stToolbar"] {visibility: hidden;}
-            .stApp > header {display: none;}
+            /* Hide the "Made with Streamlit" footer */
+            footer {
+                visibility: hidden;
+                display: none;
+            }
             
-            /* Extra safety to hide the bottom viewer badge */
-            viewer-badge-container {display: none !important;}
+            /* STRONG FIX: Hide the "Manage App" / "Crown" button */
+            [data-testid="stToolbar"] {
+                visibility: hidden !important;
+                display: none !important;
+                height: 0px !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+
+            /* Extra safety: Hide any embedded deploy buttons */
+            .stDeployButton {
+                display: none !important;
+                visibility: hidden !important;
+            }
         </style>
     """, unsafe_allow_html=True)
 
