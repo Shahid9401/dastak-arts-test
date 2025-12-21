@@ -1,10 +1,9 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Features: Stable Tables + Fast Speed + Clean UI + Smart Expander Label
+# Features: Stable Old Logic (st.markdown) + Smart Expander + DARK MODE FIX
 
 import streamlit as st
 import pandas as pd
-import streamlit.components.v1 as components
 from config import DATA_FILE
 from sheet_utils import fetch_all_student_data
 
@@ -18,68 +17,86 @@ GROUP_NAMES_ML = {
 
 def render_student_view():
     
-    # --- 1. CLEAN MODE CSS (NUCLEAR OPTION) ---
+    # --- 1. CLEAN MODE CSS & GLOBAL STYLES ---
     st.markdown("""
         <style>
+            /* Hide Streamlit UI */
             #MainMenu {visibility: hidden; display: none;}
             header {visibility: hidden; display: none;}
             [data-testid="stHeader"] {visibility: hidden; display: none;}
             footer {visibility: hidden; display: none;}
-            [data-testid="stToolbar"] {
-                visibility: hidden !important;
-                display: none !important;
-                height: 0px !important;
-                opacity: 0 !important;
-                pointer-events: none !important;
+            [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+            
+            /* Custom Expander Styling */
+            .streamlit-expanderHeader {
+                background-color: #f0f2f6;
+                color: #31333F;
+                border-radius: 8px;
+                font-weight: 600;
             }
-            .stDeployButton {display: none !important; visibility: hidden !important;}
+            
+            /* --- NUCLEAR CONTRAST FIX --- */
+            /* Force the first row (Winner) to be Yellow */
+            table tr:nth-child(1) {
+                background-color: #fff9db !important;
+                font-weight: bold;
+            }
+            
+            /* FORCE TEXT BLACK in the first row (Fixes Dark Mode) */
+            table tr:nth-child(1) td {
+                color: #000000 !important;
+            }
+            table tr:nth-child(1) span {
+                color: #000000 !important;
+            }
+            table tr:nth-child(1) b {
+                color: #000000 !important;
+            }
+            
+            /* Headers */
+            th {
+                background-color: #2f2f2f;
+                color: white !important;
+                text-align: center;
+                padding: 10px;
+            }
+            td {
+                text-align: center;
+                vertical-align: middle;
+            }
         </style>
     """, unsafe_allow_html=True)
 
-    # --- 2. FAST DATA FETCH ---
+    # --- 2. DATA FETCH ---
     df, notif_df = fetch_all_student_data()
 
-    # --- 3. NOTIFICATIONS (Marquee) ---
+    # --- 3. NOTIFICATIONS ---
     if not notif_df.empty:
         latest_msgs = notif_df.head(5)["Message"].astype(str).tolist()
         running_text = "  🔸  ".join(latest_msgs)
-
         st.markdown(
             f"""
-            <div style="
-                background:#fff3cd;
-                padding:12px 0;
-                border-radius:8px;
-                margin-bottom:18px;
-                font-size:18px;
-                font-weight:600;
-                color:#7a5c00;
-                overflow:hidden;
-                white-space:nowrap;
-            ">
-                <marquee behavior="scroll" direction="left" scrollamount="6">
-                    📢 {running_text}
-                </marquee>
+            <div style="background:#fff3cd; padding:10px; border-radius:8px; margin-bottom:15px; color:#856404; font-weight:bold; overflow:hidden; white-space:nowrap;">
+                <marquee behavior="scroll" direction="left">{running_text}</marquee>
             </div>
-            """,
-            unsafe_allow_html=True
+            """, unsafe_allow_html=True
         )
 
     if df.empty:
         st.info("Results will appear here once events are finalized.")
         return
 
-    # Filter for Final results
     df_final = df[df["Status"] == "final"]
 
     # ==========================
-    # 🏆 OVERALL POINT TABLE
+    # 🏆 OVERALL POINT TABLE (OLD LOGIC: st.markdown)
     # ==========================
     st.subheader("🏆 Overall Point Table")
 
     if df_final.empty:
-        st.info("🎭 Results will appear here once events are finalized. Please check back soon.")
+        st.info("Results pending.")
     else:
+        # Prepare Data
         leaderboard = (
             df_final.groupby("Group")["Points"]
             .sum()
@@ -88,129 +105,51 @@ def render_student_view():
         )
         leaderboard.insert(0, "Rank", range(1, len(leaderboard) + 1))
 
-        def rank_label(r):
-            if r == 1: return "🥇 1st"
-            elif r == 2: return "🥈 2nd"
-            elif r == 3: return "🥉 3rd"
-            else: return f"{r}th"
+        # Format Columns
+        leaderboard["Rank"] = leaderboard["Rank"].apply(lambda r: f"🥇 1st" if r==1 else (f"🥈 2nd" if r==2 else (f"🥉 3rd" if r==3 else f"{r}th")))
+        leaderboard["Group"] = leaderboard["Group"].apply(lambda g: f"{g} – {GROUP_NAMES_ML.get(g, '')}")
 
-        leaderboard["Rank"] = leaderboard["Rank"].apply(rank_label)
-        leaderboard["Group"] = leaderboard["Group"].apply(
-            lambda g: f"{g} – {GROUP_NAMES_ML.get(g, '')}"
-        )
-
+        # Convert to HTML
         html_table = leaderboard[["Rank", "Group", "Points"]].to_html(index=False, escape=False)
 
-        st.markdown(
-            f"""
-            <div style="max-width:900px; margin:auto;">
-                <style>
-                    table {{ width:100%; border-collapse:collapse; }}
-                    th {{
-                        background:#2f2f2f;
-                        color:#ffffff;
-                        font-weight:bold;
-                        text-align:center !important;
-                        padding:10px;
-                    }}
-                    td {{
-                        text-align:center !important;
-                        padding:10px;
-                        color:inherit;
-                    }}
-                    tr:nth-child(1) {{
-                        background:rgba(255,215,0,0.15);
-                        font-weight:700;
-                        border-left:6px solid #f5b301;
-                    }}
-                    tr{{border-bottom:1px solid rgba(255,215,0,0.15)}}
-                </style>
-                {html_table}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        # Render (CSS is already handled globally above)
+        st.markdown(html_table, unsafe_allow_html=True)
 
     st.markdown("---")
     
     # ==========================
-    # 🎭 EVENT-WISE RESULTS
-    # (Smart Expander: Shows selected event in title)
+    # 🎭 EVENT-WISE RESULTS (OLD LOGIC: st.markdown)
     # ==========================
     if not df_final.empty:
         st.subheader("🎭 Event-wise Results")
 
+        # Smart Expander (Logic only)
         event_list = ["-- Select Event --"] + sorted(df_final["Event"].unique().tolist())
         
-        # --- NEW LOGIC START: Smart Label ---
-        # 1. Initialize session state if clean
         if "selected_event_key" not in st.session_state:
             st.session_state.selected_event_key = "-- Select Event --"
+            
+        label = "📂 Tap to Select Event" if st.session_state.selected_event_key == "-- Select Event --" else f"📂 Selected: {st.session_state.selected_event_key}"
 
-        # 2. Decide what the Label should say based on current memory
-        current_selection = st.session_state.selected_event_key
-        if current_selection == "-- Select Event --":
-            expander_label = "📂 Tap here to Select Event"
-        else:
-            expander_label = f"📂 Selected: {current_selection}"
-
-        # 3. Draw Expander with dynamic label
-        with st.expander(expander_label, expanded=False):
-            # 4. The Radio Button updates the memory ('key') automatically
-            event_filter = st.radio(
-                "Choose an event:",
-                options=event_list,
-                key="selected_event_key", # <--- This binds it to the memory
-                label_visibility="collapsed"
-            )
-        # --- NEW LOGIC END ---
+        with st.expander(label, expanded=False):
+            event_filter = st.radio("Choose:", event_list, key="selected_event_key", label_visibility="collapsed")
 
         if event_filter != "-- Select Event --":
-            event_df = df_final[df_final["Event"] == event_filter]
-            event_display_df = event_df[["Position", "Name", "Class", "Group"]]
-
-            table_rows_html = ""
-            for _, row in event_display_df.iterrows():
-                is_first = str(row['Position']).strip().lower() == "first"
-                row_style = 'style="background-color: rgba(255, 215, 0, 0.25); font-weight: 600;"' if is_first else ""
-                
-                g_id = row['Group']
-                g_name = GROUP_NAMES_ML.get(g_id, "")
-                group_html = f"<span>{g_id}</span><br><span style='font-size:0.85em; opacity:0.75;'>{g_name}</span>"
-
-                table_rows_html += f"""
-                <tr {row_style}>
-                    <td>{row['Position']}</td>
-                    <td>{row['Name']}</td>
-                    <td>{row['Class']}</td>
-                    <td>{group_html}</td>
-                </tr>
-                """
-
-            import streamlit.components.v1 as components
-
-            components.html(
-                f"""
-                <div style="overflow-x: auto; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2);">
-                    <style>
-                        :root {{ --bg: #ffffff; --text: #1a1a1a; --header-bg: #f8f9fa; }}
-                        @media (prefers-color-scheme: dark) {{ :root {{ --bg: #0e1117; --text: #fafafa; --header-bg: #1d2129; }} }}
-                        table {{ width: 100%; border-collapse: collapse; font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); }}
-                        th {{ background-color: var(--header-bg); color: var(--text); padding: 10px; font-weight: bold; border-bottom: 2px solid rgba(128,128,128,0.3); font-size: 14px; }}
-                        td {{ padding: 10px 6px; text-align: center; border-bottom: 1px solid rgba(128,128,128,0.1); font-size: 14px; line-height: 1.4; }}
-                    </style>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Position</th>
-                                <th>Name</th>
-                                <th>Class</th>
-                                <th>Group</th>
-                            </tr>
-                        </thead>
-                        <tbody>{table_rows_html}</tbody>
-                    </table>
-                </div>
-                """,
-                height=350,
-            )
+            event_df = df_final[df_final["Event"] == event_filter].copy()
+            
+            # Formatting (Stacked Group Name)
+            # Note: We use simple <span> tags so our Global CSS can target them
+            def format_group(g):
+                name = GROUP_NAMES_ML.get(g, "")
+                return f"<b>{g}</b><br><span style='font-size:0.8em;'>{name}</span>"
+            
+            event_df["Group"] = event_df["Group"].apply(format_group)
+            
+            # Select Columns
+            display_df = event_df[["Position", "Name", "Class", "Group"]]
+            
+            # Convert to HTML
+            html_event = display_df.to_html(index=False, escape=False)
+            
+            # Render
+            st.markdown(html_event, unsafe_allow_html=True)
