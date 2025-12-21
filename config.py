@@ -61,7 +61,10 @@ OFF_STAGE_EVENTS = [
     "Speech – English",
     "Speech – Arabic",
     "Speech – Hindi",
-    "Quiz Competition",
-    "Rangoli"
+    "Embroidery",
+    "Debate"
 ]
-ON_STAGE_EVENTS = ["Group Dance"]  # add later
+ON_STAGE_EVENTS = [
+    "Group Dance", 
+    "Quiz Competition",
+    "Rangoli"]  # add later
