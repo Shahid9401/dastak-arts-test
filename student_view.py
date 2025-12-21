@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Features: Stable Tables + Fast Speed + Clean UI (Nuclear Fix for Toolbar)
+# Features: Stable Tables + Fast Speed + Clean UI + No Mobile Keyboard (Expander Fix)
 
 import streamlit as st
 import pandas as pd
@@ -20,18 +20,20 @@ def render_student_view():
     
     # --- 1. CLEAN MODE CSS (NUCLEAR OPTION) ---
     st.markdown("""
-    <style>
-    /* Hide Streamlit Cloud floating buttons (mobile & desktop) */
-    [data-testid="stToolbar"] {
-        display: none;
-    }
-    [data-testid="stDecoration"] {
-        display: none;
-    }
-    [data-testid="stStatusWidget"] {
-        display: none;
-    }
-    </style>
+        <style>
+            #MainMenu {visibility: hidden; display: none;}
+            header {visibility: hidden; display: none;}
+            [data-testid="stHeader"] {visibility: hidden; display: none;}
+            footer {visibility: hidden; display: none;}
+            [data-testid="stToolbar"] {
+                visibility: hidden !important;
+                display: none !important;
+                height: 0px !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+            .stDeployButton {display: none !important; visibility: hidden !important;}
+        </style>
     """, unsafe_allow_html=True)
 
     # --- 2. FAST DATA FETCH ---
@@ -72,7 +74,6 @@ def render_student_view():
 
     # ==========================
     # 🏆 OVERALL POINT TABLE
-    # (Stable Logic)
     # ==========================
     st.subheader("🏆 Overall Point Table")
 
@@ -85,7 +86,6 @@ def render_student_view():
             .reset_index()
             .sort_values(by="Points", ascending=False)
         )
-
         leaderboard.insert(0, "Rank", range(1, len(leaderboard) + 1))
 
         def rank_label(r):
@@ -99,7 +99,6 @@ def render_student_view():
             lambda g: f"{g} – {GROUP_NAMES_ML.get(g, '')}"
         )
 
-        # Using Pandas to generate HTML (Stable method)
         html_table = leaderboard[["Rank", "Group", "Points"]].to_html(index=False, escape=False)
 
         st.markdown(
@@ -119,13 +118,11 @@ def render_student_view():
                         padding:10px;
                         color:inherit;
                     }}
-                    /* First place highlight */
                     tr:nth-child(1) {{
                         background:rgba(255,215,0,0.15);
                         font-weight:700;
                         border-left:6px solid #f5b301;
                     }}
-                    /* Row Borders */
                     tr{{border-bottom:1px solid rgba(255,215,0,0.15)}}
                 </style>
                 {html_table}
@@ -138,27 +135,31 @@ def render_student_view():
     
     # ==========================
     # 🎭 EVENT-WISE RESULTS
-    # (Compact View + Stacked Group Names)
+    # (Replaced Selectbox with Expander + Radio)
     # ==========================
     if not df_final.empty:
         st.subheader("🎭 Event-wise Results")
 
-        event_filter = st.selectbox(
-            "Select an event to view results",
-            options=["-- Select Event --"] + sorted(df_final["Event"].unique().tolist())
-        )
+        # --- FIX: USE EXPANDER + RADIO INSTEAD OF SELECTBOX ---
+        # This prevents the mobile keyboard from popping up!
+        event_list = ["-- Select Event --"] + sorted(df_final["Event"].unique().tolist())
+        
+        with st.expander("📂 Tap here to Select Event", expanded=False):
+            event_filter = st.radio(
+                "Choose an event:",
+                options=event_list,
+                label_visibility="collapsed"
+            )
 
         if event_filter != "-- Select Event --":
             event_df = df_final[df_final["Event"] == event_filter]
             event_display_df = event_df[["Position", "Name", "Class", "Group"]]
 
-            # 1. Build rows manually 
             table_rows_html = ""
             for _, row in event_display_df.iterrows():
                 is_first = str(row['Position']).strip().lower() == "first"
                 row_style = 'style="background-color: rgba(255, 215, 0, 0.25); font-weight: 600;"' if is_first else ""
                 
-                # --- Stacked Group Name ---
                 g_id = row['Group']
                 g_name = GROUP_NAMES_ML.get(g_id, "")
                 group_html = f"<span>{g_id}</span><br><span style='font-size:0.85em; opacity:0.75;'>{g_name}</span>"
@@ -174,47 +175,15 @@ def render_student_view():
 
             import streamlit.components.v1 as components
 
-            # 2. Render with COMPACT CSS
             components.html(
                 f"""
                 <div style="overflow-x: auto; border-radius: 10px; border: 1px solid rgba(128,128,128,0.2);">
                     <style>
-                        :root {{
-                            --bg: #ffffff;
-                            --text: #1a1a1a;
-                            --header-bg: #f8f9fa;
-                        }}
-                        
-                        @media (prefers-color-scheme: dark) {{
-                            :root {{
-                                --bg: #0e1117;
-                                --text: #fafafa;
-                                --header-bg: #1d2129;
-                            }}
-                        }}
-
-                        table {{
-                            width: 100%;
-                            border-collapse: collapse;
-                            font-family: -apple-system, system-ui, sans-serif;
-                            background-color: var(--bg);
-                            color: var(--text);
-                        }}
-                        th {{
-                            background-color: var(--header-bg);
-                            color: var(--text);
-                            padding: 10px;
-                            font-weight: bold;
-                            border-bottom: 2px solid rgba(128,128,128,0.3);
-                            font-size: 14px;
-                        }}
-                        td {{
-                            padding: 10px 6px;
-                            text-align: center;
-                            border-bottom: 1px solid rgba(128,128,128,0.1);
-                            font-size: 14px;
-                            line-height: 1.4;
-                        }}
+                        :root {{ --bg: #ffffff; --text: #1a1a1a; --header-bg: #f8f9fa; }}
+                        @media (prefers-color-scheme: dark) {{ :root {{ --bg: #0e1117; --text: #fafafa; --header-bg: #1d2129; }} }}
+                        table {{ width: 100%; border-collapse: collapse; font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); }}
+                        th {{ background-color: var(--header-bg); color: var(--text); padding: 10px; font-weight: bold; border-bottom: 2px solid rgba(128,128,128,0.3); font-size: 14px; }}
+                        td {{ padding: 10px 6px; text-align: center; border-bottom: 1px solid rgba(128,128,128,0.1); font-size: 14px; line-height: 1.4; }}
                     </style>
                     <table>
                         <thead>
@@ -225,9 +194,7 @@ def render_student_view():
                                 <th>Group</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {table_rows_html}
-                        </tbody>
+                        <tbody>{table_rows_html}</tbody>
                     </table>
                 </div>
                 """,
