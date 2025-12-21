@@ -62,7 +62,8 @@ OFF_STAGE_EVENTS = [
     "Speech – Arabic",
     "Speech – Hindi",
     "Embroidery",
-    "Debate"
+    "Debate",
+    "Poster Making"
 ]
 ON_STAGE_EVENTS = [
     "Group Dance", 
