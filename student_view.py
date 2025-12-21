@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Features: Stable Tables + Fast Speed + Clean UI + Smart Expander + PRO VISUALS (Classic Table)
+# Features: Stable Tables + Fast Speed + Clean UI + Smart Expander + PRO VISUALS (Dark Mode Fixed)
 
 import streamlit as st
 import pandas as pd
@@ -144,10 +144,17 @@ def render_student_view():
                         border-bottom: 1px solid #eee;
                         font-size: 15px;
                     }}
+                    
+                    /* --- FIX FOR DARK MODE INVISIBLE TEXT --- */
                     tr:nth-child(1) {{
-                        background: #fff9db; 
+                        background: #fff9db !important; 
+                        color: #1a1a1a !important; /* Force Text to be DARK (Black) */
                         font-weight: 700;
                         border-left: 6px solid #f5b301;
+                    }}
+                    /* Also force any links/spans inside the first row to be black */
+                    tr:nth-child(1) td, tr:nth-child(1) span {{
+                        color: #1a1a1a !important;
                     }}
                 </style>
                 {html_table}
@@ -188,11 +195,22 @@ def render_student_view():
             table_rows_html = ""
             for _, row in event_display_df.iterrows():
                 is_first = str(row['Position']).strip().lower() == "first"
-                row_style = 'style="background-color: rgba(255, 215, 0, 0.15); font-weight: 600;"' if is_first else ""
+                
+                # Highlight 1st Place Row
+                if is_first:
+                    # FIX: Added 'color: #1a1a1a' to force black text on yellow background
+                    row_style = 'style="background-color: #fff9db; color: #1a1a1a; font-weight: 600;"' 
+                    # Force the group name span to be black too
+                    group_color = "#1a1a1a"
+                    sub_opacity = "0.8" 
+                else:
+                    row_style = ""
+                    group_color = "#333"
+                    sub_opacity = "0.6"
                 
                 g_id = row['Group']
                 g_name = GROUP_NAMES_ML.get(g_id, "")
-                group_html = f"<span style='color:#333; font-weight:600;'>{g_id}</span><br><span style='font-size:0.85em; opacity:0.6;'>{g_name}</span>"
+                group_html = f"<span style='color:{group_color}; font-weight:600;'>{g_id}</span><br><span style='font-size:0.85em; opacity:{sub_opacity}; color:{group_color};'>{g_name}</span>"
 
                 table_rows_html += f"""
                 <tr {row_style}>
@@ -238,6 +256,15 @@ def render_student_view():
                             padding: 12px 8px; text-align: center; 
                             border-bottom: 1px solid rgba(0,0,0,0.05); 
                             font-size: 14px; line-height: 1.5; 
+                        }}
+                        
+                        /* --- FIX FOR DARK MODE IN EVENT TABLE --- */
+                        /* If a row has explicit background color (yellow), force text to be black */
+                        tr[style*="background-color"] {{
+                            color: #1a1a1a !important;
+                        }}
+                        tr[style*="background-color"] td {{
+                            color: #1a1a1a !important;
                         }}
                     </style>
                     <table>
