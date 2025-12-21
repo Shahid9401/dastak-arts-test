@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Features: Pure HTML Table (No Iframe) + Dark Mode Contrast Fix + Stable Layout
+# Features: Pure HTML Table + Dark Mode Fix + Indentation Fix (No Code Blocks)
 
 import streamlit as st
 import pandas as pd
@@ -18,7 +18,6 @@ GROUP_NAMES_ML = {
 def render_student_view():
     
     # --- 1. GLOBAL STYLES (CSS) ---
-    # We put styles here separately so they don't break the table structure
     st.markdown("""
         <style>
             /* Hide Streamlit UI */
@@ -40,6 +39,7 @@ def render_student_view():
                 overflow: hidden;
                 box-shadow: 0 4px 10px rgba(0,0,0,0.05);
                 border: 1px solid #eee;
+                margin-bottom: 20px;
             }
             .custom-table th {
                 background: linear-gradient(180deg, #2f2f2f 0%, #1a1a1a 100%);
@@ -59,7 +59,6 @@ def render_student_view():
             }
             
             /* --- DARK MODE FIX --- */
-            /* If a row has the class 'winner-row', make text BLACK */
             .winner-row {
                 background-color: #fff9db !important;
                 font-weight: bold;
@@ -95,7 +94,7 @@ def render_student_view():
     df_final = df[df["Status"] == "final"]
 
     # ==========================
-    # 🏆 OVERALL POINT TABLE (Pure HTML Construction)
+    # 🏆 OVERALL POINT TABLE
     # ==========================
     st.subheader("🏆 Overall Point Table")
 
@@ -110,7 +109,7 @@ def render_student_view():
         )
         leaderboard.insert(0, "Rank", range(1, len(leaderboard) + 1))
 
-        # Build Table HTML Manually (Safest Way)
+        # Build Table HTML (Flush Left to avoid Markdown Code Blocks)
         table_html = '<table class="custom-table">'
         table_html += '<thead><tr><th>Rank</th><th>Group</th><th>Points</th></tr></thead><tbody>'
         
@@ -120,25 +119,22 @@ def render_student_view():
             group_id = row['Group']
             group_name = GROUP_NAMES_ML.get(group_id, "")
             
-            # Icons
             if rank == 1: rank_disp = "🥇 1st"
             elif rank == 2: rank_disp = "🥈 2nd"
             elif rank == 3: rank_disp = "🥉 3rd"
             else: rank_disp = f"{rank}th"
             
-            # Dark Mode Fix Class
             row_class = "winner-row" if rank == 1 else ""
             
-            table_html += f'''
-            <tr class="{row_class}">
-                <td>{rank_disp}</td>
-                <td>
-                    <span>{group_id}</span><br>
-                    <span style="font-size:0.85em; opacity:0.8">{group_name}</span>
-                </td>
-                <td>{points}</td>
-            </tr>
-            '''
+            # NOTE: No indentation inside the f-string!
+            table_html += f"""<tr class="{row_class}">
+<td>{rank_disp}</td>
+<td>
+<span>{group_id}</span><br>
+<span style="font-size:0.85em; opacity:0.8">{group_name}</span>
+</td>
+<td>{points}</td>
+</tr>"""
             
         table_html += '</tbody></table>'
         st.markdown(table_html, unsafe_allow_html=True)
@@ -151,7 +147,6 @@ def render_student_view():
     if not df_final.empty:
         st.subheader("🎭 Event-wise Results")
 
-        # Smart Expander Logic
         event_list = ["-- Select Event --"] + sorted(df_final["Event"].unique().tolist())
         
         if "selected_event_key" not in st.session_state:
@@ -166,7 +161,6 @@ def render_student_view():
             event_df = df_final[df_final["Event"] == event_filter]
             event_display_df = event_df[["Position", "Name", "Class", "Group"]]
 
-            # Build Table HTML Manually
             table_html = '<table class="custom-table">'
             table_html += '<thead><tr><th>Pos</th><th>Name</th><th>Class</th><th>Group</th></tr></thead><tbody>'
             
@@ -180,17 +174,16 @@ def render_student_view():
                 is_first = str(pos).strip().lower() == "first"
                 row_class = "winner-row" if is_first else ""
                 
-                table_html += f'''
-                <tr class="{row_class}">
-                    <td>{pos}</td>
-                    <td>{name}</td>
-                    <td>{cls}</td>
-                    <td>
-                        <span>{gid}</span><br>
-                        <span style="font-size:0.85em; opacity:0.8">{gname}</span>
-                    </td>
-                </tr>
-                '''
+                # NOTE: No indentation inside the f-string!
+                table_html += f"""<tr class="{row_class}">
+<td>{pos}</td>
+<td>{name}</td>
+<td>{cls}</td>
+<td>
+<span>{gid}</span><br>
+<span style="font-size:0.85em; opacity:0.8">{gname}</span>
+</td>
+</tr>"""
             
             table_html += '</tbody></table>'
             st.markdown(table_html, unsafe_allow_html=True)
