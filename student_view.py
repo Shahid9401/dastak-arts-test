@@ -1,6 +1,6 @@
 # ================= STUDENT VIEW MODULE =================
 # ALOKA DASTAR – Arts Fest
-# Hybrid: Old Stable Tables + New Fast Speed + Compact Event View + Stacked Groups
+# Features: Stable Tables + Fast Speed + Clean UI (Hidden Toolbar)
 
 import streamlit as st
 import pandas as pd
@@ -18,10 +18,31 @@ GROUP_NAMES_ML = {
 
 def render_student_view():
     
-    # 1. FAST DATA FETCH (Keep this for speed!)
+    # --- 1. CLEAN MODE CSS (Hides Streamlit Toolbar & Footer) ---
+    st.markdown("""
+        <style>
+            /* Hide the top "hamburger" menu */
+            #MainMenu {visibility: hidden;}
+            
+            /* Hide the "Made with Streamlit" footer */
+            footer {visibility: hidden;}
+            
+            /* Hide the top header bar */
+            header {visibility: hidden;}
+            
+            /* Hide the "Manage App" / "Crown" button at bottom right */
+            [data-testid="stToolbar"] {visibility: hidden;}
+            .stApp > header {display: none;}
+            
+            /* Extra safety to hide the bottom viewer badge */
+            viewer-badge-container {display: none !important;}
+        </style>
+    """, unsafe_allow_html=True)
+
+    # --- 2. FAST DATA FETCH ---
     df, notif_df = fetch_all_student_data()
 
-    # 2. NOTIFICATIONS (Marquee)
+    # --- 3. NOTIFICATIONS (Marquee) ---
     if not notif_df.empty:
         latest_msgs = notif_df.head(5)["Message"].astype(str).tolist()
         running_text = "  🔸  ".join(latest_msgs)
@@ -56,7 +77,7 @@ def render_student_view():
 
     # ==========================
     # 🏆 OVERALL POINT TABLE
-    # (Restored EXACTLY from your 'student_view old.py')
+    # (Stable Logic)
     # ==========================
     st.subheader("🏆 Overall Point Table")
 
@@ -83,7 +104,7 @@ def render_student_view():
             lambda g: f"{g} – {GROUP_NAMES_ML.get(g, '')}"
         )
 
-        # Using Pandas to generate HTML (Stable method from old file)
+        # Using Pandas to generate HTML (Stable method)
         html_table = leaderboard[["Rank", "Group", "Points"]].to_html(index=False, escape=False)
 
         st.markdown(
@@ -122,7 +143,7 @@ def render_student_view():
     
     # ==========================
     # 🎭 EVENT-WISE RESULTS
-    # (Modified: Stacked Group Names + Smaller Font)
+    # (Compact View + Stacked Group Names)
     # ==========================
     if not df_final.empty:
         st.subheader("🎭 Event-wise Results")
@@ -142,11 +163,9 @@ def render_student_view():
                 is_first = str(row['Position']).strip().lower() == "first"
                 row_style = 'style="background-color: rgba(255, 215, 0, 0.25); font-weight: 600;"' if is_first else ""
                 
-                # --- NEW LOGIC: Stacked Group Name ---
-                # Example: "Group 1 <br> (Kocheri)"
+                # --- Stacked Group Name ---
                 g_id = row['Group']
                 g_name = GROUP_NAMES_ML.get(g_id, "")
-                # Create HTML for stacked display (ID bold, Name small/grey)
                 group_html = f"<span>{g_id}</span><br><span style='font-size:0.85em; opacity:0.75;'>{g_name}</span>"
 
                 table_rows_html += f"""
@@ -189,17 +208,17 @@ def render_student_view():
                         th {{
                             background-color: var(--header-bg);
                             color: var(--text);
-                            padding: 10px; /* Reduced Header Padding */
+                            padding: 10px;
                             font-weight: bold;
                             border-bottom: 2px solid rgba(128,128,128,0.3);
-                            font-size: 14px; /* Reduced Header Font */
+                            font-size: 14px;
                         }}
                         td {{
-                            padding: 10px 6px; /* Reduced Cell Padding */
+                            padding: 10px 6px;
                             text-align: center;
                             border-bottom: 1px solid rgba(128,128,128,0.1);
-                            font-size: 14px; /* Reduced Cell Font */
-                            line-height: 1.4; /* Better spacing for stacked text */
+                            font-size: 14px;
+                            line-height: 1.4;
                         }}
                     </style>
                     <table>
