@@ -20,44 +20,18 @@ def render_student_view():
     
     # --- 1. CLEAN MODE CSS (NUCLEAR OPTION) ---
     st.markdown("""
-        <style>
-            /* Hide the top "hamburger" menu */
-            #MainMenu {
-                visibility: hidden;
-                display: none;
-            }
-            
-            /* Hide the top header bar */
-            header {
-                visibility: hidden;
-                display: none;
-            }
-            [data-testid="stHeader"] {
-                visibility: hidden;
-                display: none;
-            }
-            
-            /* Hide the "Made with Streamlit" footer */
-            footer {
-                visibility: hidden;
-                display: none;
-            }
-            
-            /* STRONG FIX: Hide the "Manage App" / "Crown" button */
-            [data-testid="stToolbar"] {
-                visibility: hidden !important;
-                display: none !important;
-                height: 0px !important;
-                opacity: 0 !important;
-                pointer-events: none !important;
-            }
-
-            /* Extra safety: Hide any embedded deploy buttons */
-            .stDeployButton {
-                display: none !important;
-                visibility: hidden !important;
-            }
-        </style>
+    <style>
+    /* Hide Streamlit Cloud floating buttons (mobile & desktop) */
+    [data-testid="stToolbar"] {
+        display: none;
+    }
+    [data-testid="stDecoration"] {
+        display: none;
+    }
+    [data-testid="stStatusWidget"] {
+        display: none;
+    }
+    </style>
     """, unsafe_allow_html=True)
 
     # --- 2. FAST DATA FETCH ---
