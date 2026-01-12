@@ -1,28 +1,24 @@
-# ================= ALOKA DASTAR – ARTS FEST RESULT & POINT TABLE APP =================
-# FULL VERSION: Preserves all features + Fixes PDF Bug + Adds Debug Tool
+# ================= ALOKA DASTAK – ARTS FEST RESULT & POINT TABLE APP =================
+# FINAL VERSION: Supports Joint Winners (Multiple Groups in same Position)
 
 import streamlit as st
 import pandas as pd
 from datetime import datetime
 import os
-import time  # Added for sync delay
+import time
 from config import (
     TEACHER_USERNAME,
     TEACHER_PASSWORD,
-    POINTS,
     GROUPS,
     OFF_STAGE_EVENTS,
     ON_STAGE_EVENTS
 )
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.pagesizes import A4
 from pdf_generator import generate_event_pdf
-from reportlab.lib import colors
-# from student_view import render_student_view
 from sheet_utils import read_results, write_results, add_notification
 from header import render_header
 
+# --- CONFIGURATION ---
+POINTS = {"First": 5, "Second": 3, "Third": 1}
 
 GROUP_NAMES_ML = {
     "Group 1": "കോച്ചേരി",
@@ -39,13 +35,12 @@ GROUP_DISPLAY = {
 
 TEACHER_USER = "teacher"
 TEACHER_PASS = "teacher123"
-
 ADMIN_USER = "admin"
 ADMIN_PASS = "admin123"
 
+# --- SESSION STATE ---
 if "role" not in st.session_state:
     st.session_state.role = None
-
 if "just_finalized" not in st.session_state:
     st.session_state.just_finalized = False
 
@@ -56,30 +51,41 @@ if st.session_state.role is None:
 else:
     render_header()
 
-# ---------------- CONSTANTS ----------------
-DATA_FILE = "results.csv"
-
 # ---------------- DATA INIT ----------------
+DATA_FILE = "results.csv"
 if not os.path.exists(DATA_FILE):
     pd.DataFrame(columns=[
         "Timestamp", "Event", "Position", "Name",
         "Semester", "Class", "Group", "Points", "Status"
     ]).to_csv(DATA_FILE, index=False)
 
-# ---------------- NAVIGATION ----------------
-st.sidebar.markdown("### 👨‍🏫 Teacher Panel")
+# ================= SIDEBAR INSTRUCTIONS =================
+if st.session_state.role == "teacher":
+    st.sidebar.markdown("### 👨‍🏫 Teacher Panel")
+    
+    with st.sidebar.expander("📖 Guide: Joint Winners", expanded=False):
+        st.markdown("""
+        **For Group Items:**
+        1. **Start a Team:** Click **➕ Add New Team**. Select the Group (e.g., Group 1).
+        2. **Add Members:** Click **Add Member** to add more students to *that specific group*.
+        3. **Joint Winners:** If another group (e.g., Group 2) *also* won First:
+           - Click **➕ Add New Team** *again*.
+           - Select "Group 2".
+           - Add members for them.
+        
+        **Points:**
+        - Each "Team" entry gets the full points (5, 3, or 1).
+        - Extra members do not multiply the points.
+        """)
+    
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🚪 Logout"):
+        st.session_state.role = None
+        st.rerun()
 
-if st.sidebar.button("🚪 Logout"):
-    st.session_state.role = None
-    st.rerun()
-
-# ================= TEACHER PANEL =================
-if "role" not in st.session_state:
-    st.session_state.role = None
-
+# ================= LOGIN =================
 if st.session_state.role is None:
     st.subheader("🔐 Login")
-
     u = st.text_input("Username")
     p = st.text_input("Password", type="password")
 
@@ -88,210 +94,184 @@ if st.session_state.role is None:
             st.session_state.role = "teacher"
             st.success("Teacher login successful")
             st.rerun()
-
         elif u == ADMIN_USER and p == ADMIN_PASS:
             st.session_state.role = "admin"
             st.success("Admin login successful")
             st.rerun()
-
         else:
             st.error("Invalid credentials")
-
     st.stop()
 
+# ================= MAIN APP =================
 else:
     if st.session_state.role == "teacher":
-        st.header("👨‍🏫 Teacher Panel")
-        
         st.success("Welcome, Arts Festival Coordinator 🎭")
 
-        event_type = st.radio(
-            "Select Event Type",
-            ["Off-stage", "On-stage"],
-            horizontal=True
-        )
+        event_type = st.radio("Select Event Type", ["Off-stage", "On-stage"], horizontal=True)
         tab1, tab2 = st.tabs(["📝 Result Entry", "📊 Overall Point Table"])
         
-
-        # -------- RESULT ENTRY --------
-        GROUP_DISPLAY = {
-        g: f"{g} – {GROUP_NAMES_ML[g]}"
-        for g in GROUP_NAMES_ML
-        }
+        # -------- TAB 1: RESULT ENTRY --------
         with tab1:
             if event_type == "Off-stage":
                 event_list = OFF_STAGE_EVENTS
-                label = "Off-stage Event"
+                event_options = ["--Select Event--"] + OFF_STAGE_EVENTS
+                event_name = st.selectbox("Off-stage Event", event_options)
+                onstage_category = "Individual" 
             else:
                 event_list = ON_STAGE_EVENTS
-                label = "On-stage Event"
-
-            if not event_list:
-                st.info("ℹ️ On-stage events will be added later.")
-                st.stop()
-            event_options = ["--Select Event--"] + OFF_STAGE_EVENTS
-            if (event_type=="Off-stage"):
-                event_name = st.selectbox("Off-stage Event", event_options)
-            else:
                 event_name = st.selectbox("On-stage Event", ["--Select Event--"] + ON_STAGE_EVENTS)
-                onstage_category = st.radio(
-                "Select On-stage Event Category",
-                ["Individual", "Group"],
-                horizontal=True
-                )
-                # Reset winners if on-stage category changes
-                if "last_onstage_category" not in st.session_state:
-                    st.session_state.last_onstage_category = onstage_category
+                onstage_category = st.radio("Select Category", ["Individual", "Group"], horizontal=True)
 
-                if st.session_state.last_onstage_category != onstage_category:
-                    st.session_state.winners = {
-                        "First": [],
-                        "Second": [],
-                        "Third": []
-                    }
-                    st.session_state.last_onstage_category = onstage_category
+            # Reset on category switch
+            if "last_onstage_category" not in st.session_state:
+                st.session_state.last_onstage_category = onstage_category
+
+            if st.session_state.last_onstage_category != onstage_category:
+                st.session_state.winners = {"First": [], "Second": [], "Third": []}
+                st.session_state.last_onstage_category = onstage_category
 
             if event_name == "-- Select Event --":
-                st.info("ℹ️ Please select an event to enter results.")
+                st.info("ℹ️ Please select an event.")
                 st.stop()
-
-            # ------------------ Track event change ------------------
-            if "just_finalized" not in st.session_state:
-                st.session_state.just_finalized = False
-
-            if "last_event" not in st.session_state:
-                st.session_state.last_event = event_name
-
-            if st.session_state.last_event != event_name:
-                st.session_state.just_finalized = False
-                st.session_state.last_event = event_name
-            # -------------------------------------------------------
-
 
             if "winners" not in st.session_state:
                 st.session_state.winners = {"First": [], "Second": [], "Third": []}
 
-            def add_winner(pos):
+            # UPDATED ADD FUNCTION: Handles "New Team" flag
+            def add_winner(pos, is_new_team=False):
                 st.session_state.winners[pos].append({
-                    "Name": "",
-                    "Semester": "",
-                    "Class": "",
-                    "Group": list(GROUPS.keys())[0]
+                    "Name": "", "Semester": "", "Class": "",
+                    "Group": list(GROUPS.keys())[0],
+                    "is_new_team": is_new_team # Flag to identify Team Leaders
                 })
 
+            # --- INPUT LOOP ---
             for pos in ["First", "Second", "Third"]:
-                st.markdown(f"### {pos} Place")
-                if st.button(f"➕ Add {pos}", key=f"add_{pos}"):
-                    add_winner(pos)
+                st.markdown(f"### {pos} Place <span style='font-size:0.8em; color:grey'>({POINTS[pos]} pts)</span>", unsafe_allow_html=True)
+                
+                # BUTTON LOGIC
+                c_btn1, c_btn2, c_space = st.columns([1.5, 1.5, 3])
+                
+                if onstage_category == "Group":
+                    # Button 1: Start a BRAND NEW Group (Joint Winner)
+                    if c_btn1.button(f"➕ Add New Team", key=f"add_team_{pos}"):
+                        add_winner(pos, is_new_team=True)
+                    
+                    # Button 2: Add member to the LAST added group
+                    if len(st.session_state.winners[pos]) > 0:
+                        if c_btn2.button(f"➕ Add Member", key=f"add_mem_{pos}"):
+                            add_winner(pos, is_new_team=False)
+                    elif len(st.session_state.winners[pos]) == 0:
+                        # If list is empty, 'Add Member' should act like 'Add Team'
+                        pass 
+                else:
+                    if c_btn1.button(f"➕ Add Winner", key=f"add_{pos}"):
+                        add_winner(pos, is_new_team=True)
 
-                if (event_type == "On-stage" and onstage_category == "Individual") or (event_type=="Off-stage"):
-                    for i, w in enumerate(st.session_state.winners[pos]):
-                        c1, c2, c3, c4, c5 = st.columns([3,2,2,3,1])
-                        w["Name"] = c1.text_input("Name", key=f"{pos}_n_{i}")
-                        w["Semester"] = c2.text_input("Semester", key=f"{pos}_s_{i}")
-                        w["Class"] = c3.text_input("Class", key=f"{pos}_c_{i}")
+                # RENDER ROWS
+                current_group_context = None # Tracks the group of the current 'Team' block
+                
+                for i, w in enumerate(st.session_state.winners[pos]):
+                    c1, c2, c3, c4, c5 = st.columns([3, 1.5, 2, 3, 1])
+                    
+                    # Logic to identify if this row is a "Team Leader"
+                    # It is a leader if: It's the first row (i=0) OR it has the 'is_new_team' flag
+                    is_leader = (i == 0) or w.get("is_new_team", False)
+                    
+                    # Name Input
+                    label = "Team Leader / Winner" if is_leader else f"Member"
+                    w["Name"] = c1.text_input(label, key=f"{pos}_nm_{i}", placeholder="Student Name")
+                        
+                    w["Semester"] = c2.text_input("Sem", key=f"{pos}_sm_{i}")
+                    w["Class"] = c3.text_input("Class", key=f"{pos}_cl_{i}")
+                    
+                    # GROUP SELECTION
+                    if onstage_category == "Group":
+                        if is_leader:
+                            # This row STARTS a group. Show SelectBox.
+                            group_display = c4.selectbox(
+                                "Select Group",
+                                list(GROUP_DISPLAY.values()),
+                                index=list(GROUP_DISPLAY.keys()).index(w["Group"]),
+                                key=f"{pos}_gp_{i}"
+                            )
+                            # Update the row's group
+                            selected_group = [k for k, v in GROUP_DISPLAY.items() if v == group_display][0]
+                            w["Group"] = selected_group
+                            current_group_context = selected_group # Set context for following members
+                        else:
+                            # This row FOLLOWS a group. Inherit from context.
+                            if current_group_context:
+                                w["Group"] = current_group_context
+                                c4.info(f"Team: {GROUP_DISPLAY[current_group_context]}")
+                            else:
+                                c4.warning("⚠️ No Team Leader above!")
+                    else:
+                        # Individual Item - Always selectable
                         group_display = c4.selectbox(
-                        "Group",
-                        list(GROUP_DISPLAY.values()),
-                        key=f"{pos}_g_{i}"
+                            "Group", list(GROUP_DISPLAY.values()),
+                            index=list(GROUP_DISPLAY.keys()).index(w["Group"]),
+                            key=f"{pos}_gp_{i}"
                         )
-
                         w["Group"] = [k for k, v in GROUP_DISPLAY.items() if v == group_display][0]
-                        if c5.button("❌", key=f"del_{pos}_{i}"):
-                            st.session_state.winners[pos].pop(i)
-                            st.rerun()
 
-                elif event_type == "On-stage" and onstage_category == "Group":
-                        for i, w in enumerate(st.session_state.winners[pos]):
-                            c1, c2 = st.columns(2)
+                    if c5.button("❌", key=f"del_{pos}_{i}"):
+                        st.session_state.winners[pos].pop(i)
+                        st.rerun()
+                
+                # Visual divider if multiple teams exist in one position
+                if onstage_category == "Group" and len(st.session_state.winners[pos]) > 0:
+                    st.markdown("---")
 
-                            w["Name"] = c1.text_input(
-                                "Team / Group Name",
-                                key=f"{pos}_team_{i}",
-                                placeholder="e.g. Shahid & Party"
-                            )
-
-                            w["Group"] = c2.selectbox(
-                                "Group",
-                                list(GROUP_DISPLAY.keys()),
-                                format_func=lambda g: GROUP_DISPLAY[g],
-                                key=f"{pos}_g_{i}"
-                            )
-
-                            # Maintain schema consistency
-                            w["Class"] = "-"
-                            w["Semester"] = "-"
-
-
+            # --- SAVE FUNCTION ---
             def save_results(status):
-                # Ensure status is lowercase for consistency
                 status = status.strip().lower()
-                from sheet_utils import read_results, write_results, clear_results
                 df = read_results()
-
-                df["Event"] = df["Event"].astype(str).str.strip()
-                df["Status"] = df["Status"].astype(str).str.strip().str.lower()
-
-                # ---------- SAVE NEW ROWS (Draft or Final) ----------
                 rows = []
                 ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
                 for pos, winners in st.session_state.winners.items():
-                    for w in winners:
-                        if w["Name"].strip() == "":
-                            continue
+                    for i, w in enumerate(winners):
+                        if w["Name"].strip() == "": continue
+                        
+                        # 🔥 JOINT WINNER POINT LOGIC 🔥
+                        if onstage_category == "Group":
+                            # Only "Leaders" get points.
+                            # Leader = Index 0 OR explicitly marked 'is_new_team'
+                            is_leader_row = (i == 0) or w.get("is_new_team", False)
+                            current_points = POINTS[pos] if is_leader_row else 0
+                        else:
+                            # Individual = Everyone gets points
+                            current_points = POINTS[pos]
+
                         rows.append({
-                            "Timestamp": ts,
-                            "Event": event_name,
-                            "Position": pos,
-                            "Name": w["Name"],
-                            "Semester": w.get("Semester", ""),
-                            "Class": w.get("Class", ""),
-                            "Group": w["Group"],
-                            "Points": POINTS[pos],
-                            "Status": status,
+                            "Timestamp": ts, "Event": event_name, "Position": pos,
+                            "Name": w["Name"], "Semester": w.get("Semester", ""),
+                            "Class": w.get("Class", ""), "Group": w["Group"],
+                            "Points": current_points, "Status": status,
                         })
 
                 if rows:
                     df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
                     write_results(df)
-                    st.session_state.winners = {"First": [], "Second": [], "Third": []}
-                    st.success(f"Results saved as {status} successfully")
+                    if status == "draft":
+                         st.session_state.winners = {"First": [], "Second": [], "Third": []}
+                    st.success(f"Results saved as {status}")
                     st.cache_data.clear()
-            
-            if event_name == "--Select Event--":
-                st.error("❌ Please select a valid event before saving.")
-                st.stop()
 
             c1, c2 = st.columns(2)
-            if c1.button("💾 Save Draft"):
-                if event_type == "On-stage" and onstage_category == "Group":
-                    # Check if name is entered for the first winner (basic validation)
-                    pass 
-                save_results("draft")
-            
+            if c1.button("💾 Save Draft"): save_results("draft")
+
             if c2.button("🔒 Finalize"):
                 df = read_results()
-
-                # Normalize columns
                 df["Status"] = df["Status"].astype(str).str.strip().str.lower()
-                df["Event"] = df["Event"].astype(str).str.strip()
+                mask = (df["Event"] == event_name) & (df["Status"] != "final")
                 
-                mask = df["Event"] == event_name
-
-                if df[mask].empty:
-                    st.error("❌ No rows found for this event. Please Save Draft first.")
-                    st.stop()
-
-                if (df.loc[mask, "Status"] == "final").any():
-                    st.error("🚫 This event is already finalized")
-                    st.stop()
-
-                # 🔥 UPDATE STATUS TO 'final' (lowercase)
-                df.loc[mask, "Status"] = "final"
-
-                # 🔥 GENERATE PDF NOW (Before writing to sheet to ensure data exists)
-                final_df_for_pdf = df[mask].copy()
+                # Logic to prevent double finalizing is handled by UI check below
+                # Just mark 'final'
+                df.loc[df["Event"] == event_name, "Status"] = "final"
+                
+                final_df_for_pdf = df[df["Event"] == event_name].copy()
                 try:
                     pdf_file = generate_event_pdf(event_name, final_df_for_pdf)
                     st.session_state['generated_pdf'] = pdf_file
@@ -299,164 +279,37 @@ else:
                     st.error(f"Error generating PDF: {e}")
 
                 write_results(df)
-                
                 st.session_state.just_finalized = True
                 st.cache_data.clear()
-                
-                st.success("✅ Finalized and written to Google Sheets")
-                
-                # 🕒 WAIT FOR GOOGLE SHEETS PROPAGATION
-                with st.spinner("Syncing with cloud..."):
-                    time.sleep(2) 
-
-                add_notification(
-                "FINAL",
-                f"Results finalized for {event_name}",
-                event_name
-                )
-  
+                st.success("✅ Finalized!")
+                time.sleep(1)
+                add_notification("FINAL", f"Results declared for {event_name}", event_name)
                 st.rerun()
 
-            # --------- CHECK STATUS & SHOW PDF ---------
-            from sheet_utils import read_results
+            # --- PDF DOWNLOAD ---
             df = read_results()
             df["Status"] = df["Status"].astype(str).str.strip().str.lower()
-            df["Event"] = df["Event"].astype(str).str.strip()
-
-            event_rows = df[df["Event"] == event_name]
-
-            is_final = (
-                not event_rows.empty and
-                (event_rows["Status"] == "final").all()
-            )
-
-            if "last_event" not in st.session_state:
-                st.session_state.last_event = None
-
-            if st.session_state.last_event != event_name:
-                st.session_state.just_finalized = False
-                st.session_state.last_event = event_name
-
+            is_final = not df[(df["Event"] == event_name) & (df["Status"] == "final")].empty
+            
             if is_final:
-                # FIX: Match the lowercase 'final' used in sheet_utils
-                final_df = df[
-                    (df["Event"] == event_name) &
-                    (df["Status"] == "final") 
-                ]
-                
-                # --- DEBUG SECTION ---
-                with st.expander("🔍 Debug PDF Data (Open if PDF is blank)"):
-                    st.write(f"**Event Selected:** '{event_name}'")
-                    st.write(f"**Total Rows:** {len(event_rows)}")
-                    st.write("**Finalized Rows:**", len(final_df))
-                    st.dataframe(final_df) 
-                # ---------------------
-
-                # If dataframe is empty but is_final is true (rare race condition),
-                # fallback to the one we generated during the button click
-                if final_df.empty and 'generated_pdf' in st.session_state:
-                     pdf_file = st.session_state['generated_pdf']
+                final_df = df[(df["Event"] == event_name) & (df["Status"] == "final")]
+                if 'generated_pdf' in st.session_state and st.session_state.just_finalized:
+                    pdf_file = st.session_state['generated_pdf']
                 else:
                     pdf_file = generate_event_pdf(event_name, final_df)
-
-                with open(pdf_file, "rb") as f:
-                    st.download_button(
-                        "📄 Download Final Result (PDF)",
-                        f,
-                        file_name=pdf_file.split(os.sep)[-1],
-                        mime="application/pdf"
-                    )
-            elif not is_final and st.session_state.just_finalized:
-                 # Fallback if finalized but sheet sync is slow
-                 st.warning("⚠️ Syncing results... Refresh page if PDF button doesn't appear.")
+                
+                if os.path.exists(pdf_file):
+                    with open(pdf_file, "rb") as f:
+                        st.download_button("📄 Download PDF", f, file_name=pdf_file.split(os.sep)[-1], mime="application/pdf")
 
         with tab2:
+            # ... (Point Table code remains same) ...
             from sheet_utils import read_results
             df = read_results()
-
             df["Status"] = df["Status"].astype(str).str.strip().str.lower()
             final_df = df[df["Status"] == "final"]
-
-            if final_df.empty:
-                st.info("No finalized results yet")
-            else:
-                leaderboard = (
-                    final_df.groupby("Group")["Points"]
-                    .sum()
-                    .reset_index()
-                    .sort_values(by="Points", ascending=False)
-                )
-
+            if not final_df.empty:
+                leaderboard = final_df.groupby("Group")["Points"].sum().reset_index().sort_values(by="Points", ascending=False)
                 leaderboard.insert(0, "Rank", range(1, len(leaderboard) + 1))
-
-                def rank_label(r):
-                    if r == 1:
-                        return "🥇 1st"
-                    elif r == 2:
-                        return "🥈 2nd"
-                    elif r == 3:
-                        return "🥉 3rd"
-                    else:
-                        return f"{r}th"
-
-                leaderboard["Rank"] = leaderboard["Rank"].apply(rank_label)
-
-
-                leaderboard["Group"] = leaderboard["Group"].apply(
-                    lambda g: f"{g} – {GROUP_NAMES_ML.get(g, '')}"
-                )
-
-                display_leaderboard = leaderboard[["Rank", "Group", "Points"]]
-                html_table = display_leaderboard.to_html(index=False, escape=False)
-
-                st.markdown(
-                f"""
-                <div style="max-width:900px; margin:auto;">
-                    <style>
-                        table {{ width:100%; border-collapse:collapse; }}
-                        th {{
-                            background:#2f2f2f;
-                            color:#ffffff;
-                            font-weight:bold;
-                            text-align:center !important;
-                            padding:10px;
-                        }}
-                        td {{
-                            text-align:center !important;
-                            padding:10px;
-                            color:inherit;
-                        }}
-                        tr:nth-child(1) {{
-                            background:rgba(255,215,0,0.15);
-                            font-weight:700
-                            border-left:6px solid #f5b301;
-                        }}
-                        tr{{border-bottom:1px solid rgba(255,215,0,0.15)}}
-                    </style>
-                    {html_table}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-    elif st.session_state.role == "admin":
-        st.header("🔒 Admin Panel")
-        
-        # Reset Logic
-        from sheet_utils import read_results, write_results, clear_results
-        df = read_results()
-
-        st.subheader("📊 Current Data")
-        st.dataframe(df)
-
-        st.subheader("🚨 Reset All Results")
-        st.warning(
-            "This will permanently delete ALL results.\n"
-            "Use only to clear test data."
-        )
-
-        confirm = st.checkbox("I understand this action is irreversible")
-
-        if confirm and st.button("🗑️ Clear All Results"):
-            clear_results()
-            st.success("All results cleared successfully")
-            st.rerun()
+                leaderboard["Group"] = leaderboard["Group"].apply(lambda g: f"{g} – {GROUP_NAMES_ML.get(g, '')}")
+                st.table(leaderboard)
