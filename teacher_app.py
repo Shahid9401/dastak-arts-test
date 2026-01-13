@@ -58,28 +58,39 @@ if st.session_state.role is None:
         # We removed the inner columns. We rely purely on CSS to center this.
         with st.container():
             st.markdown(
-                """
-                <style>
-                /* Target the image container directly */
-                [data-testid="stImage"] {
-                    background-color: white;
-                    padding: 15px;
-                    border-radius: 20px;
-                    display: block;
-                    margin-left: auto;
-                    margin-right: auto;
-                    width: 160px; /* Fixed width for the white card */
+            """
+            <style>
+            /* --- LOGIN PAGE LOGO FIX --- */
+
+            /* Make image container full-width so it can center properly */
+            [data-testid="stImage"]{
+                width: 100% !important;
+                display: flex !important;
+                justify-content: center !important;
+                margin-top: -25px !important;  /* ✅ Moves logo UP */
+                margin-bottom: 10px !important;
+            }
+
+            /* Add white rounded logo card */
+            [data-testid="stImage"] img{
+                background: white;
+                padding: 15px;
+                border-radius: 20px;
+                width: 130px !important;
+                height: auto !important;
+            }
+
+            /* Extra push upward only on small screens */
+            @media (max-width: 600px){
+                [data-testid="stImage"]{
+                    margin-top: -40px !important;  /* ✅ Mobile extra move up */
                 }
-                /* Center the actual image inside the white card */
-                [data-testid="stImage"] > img {
-                    display: block;
-                    margin-left: auto;
-                    margin-right: auto;
-                }
-                </style>
-                """, 
-                unsafe_allow_html=True
-            )
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
             if os.path.exists("logo.png"):
                 st.image("logo.png", width=130)
 
