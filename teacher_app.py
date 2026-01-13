@@ -142,6 +142,24 @@ if st.session_state.role == "teacher":
         st.rerun()
 
 # ================= MAIN APP =================
+if st.session_state.role is None:
+    st.subheader("🔐 Login")
+    u = st.text_input("Username")
+    p = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+        if u == TEACHER_USER and p == TEACHER_PASS:
+            st.session_state.role = "teacher"
+            st.success("Teacher login successful")
+            st.rerun()
+        elif u == ADMIN_USER and p == ADMIN_PASS:
+            st.session_state.role = "admin"
+            st.success("Admin login successful")
+            st.rerun()
+        else:
+            st.error("Invalid credentials")
+    st.stop()
+
 else:
     if st.session_state.role == "teacher":
         st.success("Welcome, Arts Festival Coordinator 🎭")
