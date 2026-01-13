@@ -50,18 +50,18 @@ if "just_finalized" not in st.session_state:
     
 # ================= LOGIN =================
 if st.session_state.role is None:
-    # 1. HELPER: Convert image to Base64 so we can use HTML centering
+    # 1. HELPER: Convert image to Base64
     def get_base64_image(image_path):
         if not os.path.exists(image_path):
             return ""
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
 
-    # 2. RENDER LOGO & HEADER (Combined HTML Block)
-    # This guarantees perfect centering on both Mobile and Laptop
+    # 2. RENDER LOGO & HEADER (Combined Block)
+    # This single block handles the white card, the logo, AND the text headers.
     img_b64 = get_base64_image("logo.png")
     
-    col1, col2, col3 = st.columns([1, 6, 1]) # Use a wide middle column for safety
+    col1, col2, col3 = st.columns([1, 6, 1]) 
     with col2:
         st.markdown(
             f"""
@@ -102,7 +102,7 @@ if st.session_state.role is None:
                     st.error("❌ Invalid Credentials")
 
     st.stop()
-        
+            
         # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2025 – Admin", layout="wide")
 if st.session_state.role is None:
