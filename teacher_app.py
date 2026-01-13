@@ -4,6 +4,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import base64
 import os
 import time
 from config import (
@@ -49,63 +50,40 @@ if "just_finalized" not in st.session_state:
     
 # ================= LOGIN =================
 if st.session_state.role is None:
-    # Main layout: 3 columns to center content on Desktop.
-    # On Mobile, Streamlit automatically stacks these, so col2 becomes full width.
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # 1. HELPER: Convert image to Base64 so we can use HTML centering
+    def get_base64_image(image_path):
+        if not os.path.exists(image_path):
+            return ""
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
 
+    # 2. RENDER LOGO & HEADER (Combined HTML Block)
+    # This guarantees perfect centering on both Mobile and Laptop
+    img_b64 = get_base64_image("logo.png")
+    
+    col1, col2, col3 = st.columns([1, 6, 1]) # Use a wide middle column for safety
     with col2:
-        # 1. LOGO (Simpler & More Robust)
-        # We removed the inner columns. We rely purely on CSS to center this.
-        with st.container():
-            st.markdown(
-            """
-            <style>
-            /* --- LOGIN PAGE LOGO FIX --- */
-
-            /* Make image container full-width so it can center properly */
-            [data-testid="stImage"]{
-                width: 100% !important;
-                display: flex !important;
-                justify-content: center !important;
-                margin-top: -25px !important;  /* ✅ Moves logo UP */
-                margin-bottom: 10px !important;
-            }
-
-            /* Add white rounded logo card */
-            [data-testid="stImage"] img{
-                background: white;
-                padding: 15px;
-                border-radius: 20px;
-                width: 130px !important;
-                height: auto !important;
-            }
-
-            /* Extra push upward only on small screens */
-            @media (max-width: 600px){
-                [data-testid="stImage"]{
-                    margin-top: -40px !important;  /* ✅ Mobile extra move up */
-                }
-            }
-            </style>
+        st.markdown(
+            f"""
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="
+                    background-color: white; 
+                    padding: 15px; 
+                    border-radius: 20px; 
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                    margin-bottom: 15px;
+                ">
+                    <img src="data:image/png;base64,{img_b64}" style="width: 130px; display: block;">
+                </div>
+                
+                <h3 style="margin: 0; text-align: center; font-size: 22px;">ASSABAH ARTS & SCIENCE COLLEGE</h3>
+                <h5 style="color: #B08D57; margin-top: 5px; font-weight: bold; text-align: center;">✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
+            </div>
             """,
             unsafe_allow_html=True
         )
 
-            if os.path.exists("logo.png"):
-                st.image("logo.png", width=130)
-
-        # 2. HEADER TEXT
-        st.markdown(
-            """
-            <div style='text-align: center; margin-top: 15px;'>
-                <h3 style='margin-bottom: 0; font-size: 22px;'>ASSABAH ARTS & SCIENCE COLLEGE</h3>
-                <h5 style='color: #B08D57; margin-top: 5px; font-weight: bold;'>✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
-            </div>
-            """, 
-            unsafe_allow_html=True
-        )
-        
-        # 3. LOGIN BOX
+        # 3. LOGIN FORM
         st.write("") # Spacer
         with st.container(border=True):
             st.markdown("<h4 style='text-align: center; margin: 0;'>🔐 Staff Login</h4>", unsafe_allow_html=True)
@@ -124,7 +102,7 @@ if st.session_state.role is None:
                     st.error("❌ Invalid Credentials")
 
     st.stop()
-    
+        
         # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2025 – Admin", layout="wide")
 if st.session_state.role is None:
