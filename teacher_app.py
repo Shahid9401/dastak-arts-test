@@ -49,45 +49,53 @@ if "just_finalized" not in st.session_state:
     
 # ================= LOGIN =================
 if st.session_state.role is None:
+    # Main layout: 3 columns to center content on Desktop.
+    # On Mobile, Streamlit automatically stacks these, so col2 becomes full width.
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
-        # 1. LOGO (Streamlit Native Way - Reliable)
-        # This container puts the white card background behind the logo
+        # 1. LOGO (Simpler & More Robust)
+        # We removed the inner columns. We rely purely on CSS to center this.
         with st.container():
-            sub_c1, sub_c2, sub_c3 = st.columns([1, 2, 1])
-            with sub_c2:
-                # CSS to force white background on the image
-                st.markdown(
-                    """
-                    <style>
-                    [data-testid="stImage"] {
-                        background-color: white;
-                        padding: 15px;
-                        border-radius: 20px;
-                        display: block;
-                        margin-left: auto;
-                        margin-right: auto;
-                    }
-                    </style>
-                    """, 
-                    unsafe_allow_html=True
-                )
-                if os.path.exists("logo.png"):
-                    st.image("logo.png", width=130)
+            st.markdown(
+                """
+                <style>
+                /* Target the image container directly */
+                [data-testid="stImage"] {
+                    background-color: white;
+                    padding: 15px;
+                    border-radius: 20px;
+                    display: block;
+                    margin-left: auto;
+                    margin-right: auto;
+                    width: 160px; /* Fixed width for the white card */
+                }
+                /* Center the actual image inside the white card */
+                [data-testid="stImage"] > img {
+                    display: block;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+                </style>
+                """, 
+                unsafe_allow_html=True
+            )
+            if os.path.exists("logo.png"):
+                st.image("logo.png", width=130)
 
         # 2. HEADER TEXT
         st.markdown(
             """
-            <div style='text-align: center; margin-top: 10px;'>
-                <h3 style='margin-bottom: 0; font-size: 20px;'>ASSABAH ARTS & SCIENCE COLLEGE</h3>
-                <h5 style='color: #B08D57; margin-top: 5px;'>✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
+            <div style='text-align: center; margin-top: 15px;'>
+                <h3 style='margin-bottom: 0; font-size: 22px;'>ASSABAH ARTS & SCIENCE COLLEGE</h3>
+                <h5 style='color: #B08D57; margin-top: 5px; font-weight: bold;'>✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
             </div>
             """, 
             unsafe_allow_html=True
         )
         
         # 3. LOGIN BOX
+        st.write("") # Spacer
         with st.container(border=True):
             st.markdown("<h4 style='text-align: center; margin: 0;'>🔐 Staff Login</h4>", unsafe_allow_html=True)
             u = st.text_input("Username", placeholder="ID", label_visibility="collapsed")
@@ -105,7 +113,7 @@ if st.session_state.role is None:
                     st.error("❌ Invalid Credentials")
 
     st.stop()
-
+    
         # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2025 – Admin", layout="wide")
 if st.session_state.role is None:
