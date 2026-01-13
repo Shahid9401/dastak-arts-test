@@ -8,15 +8,14 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Paragraph
 from reportlab.lib.enums import TA_CENTER
 
-
 # -------------------------
 # CONFIG
 # -------------------------
-TEMPLATE_IMG = "certificate_template.jpg"   # Your certificate background
-DATA_FILE = "results.csv"                   # Your results file
+TEMPLATE_IMG = "certificate_template.jpg"
+DATA_FILE = "results.csv"
 
-THEME_BLUE = Color(0/255, 33/255, 71/255)
-
+# Navy Blue matches your certificate border
+THEME_BLUE = Color(0/255, 33/255, 71/255) 
 
 def generate_certificates_for_event(event_name, source_df=None):
     # 1. GET DATA
@@ -24,27 +23,10 @@ def generate_certificates_for_event(event_name, source_df=None):
     if source_df is not None:
         df = source_df.copy()
     else:
-        # Fallback to reading the file (for manual testing)
+        # Fallback to reading the file (only for manual testing)
         if not os.path.exists(DATA_FILE):
             return f"❌ Error: '{DATA_FILE}' not found."
         df = pd.read_csv(DATA_FILE)
-
-    # Clean columns (Just in case)
-    df["Event"] = df["Event"].astype(str).str.strip()
-    df["Status"] = df["Status"].astype(str).str.strip().str.lower()
-
-    # Filter only FINAL for that event
-    event_df = df[(df["Event"] == event_name) & (df["Status"] == "final")]
-
-    if event_df.empty:
-        return f"⚠️ No finalized results found for event: {event_name}"
-    # -------------------------
-    # Read & validate CSV
-    # -------------------------
-    if not os.path.exists(DATA_FILE):
-        return f"❌ Error: '{DATA_FILE}' not found."
-
-    df = pd.read_csv(DATA_FILE)
 
     # Clean columns
     df["Event"] = df["Event"].astype(str).str.strip()
@@ -56,7 +38,7 @@ def generate_certificates_for_event(event_name, source_df=None):
     if event_df.empty:
         return f"⚠️ No finalized results found for event: {event_name}"
 
-    # Output PDF
+    # 2. SETUP PDF
     safe_event = event_name.replace(" ", "_").replace("/", "-")
     output_filename = f"Certificates_{safe_event}.pdf"
 
@@ -64,29 +46,22 @@ def generate_certificates_for_event(event_name, source_df=None):
     c = canvas.Canvas(output_filename, pagesize=landscape(A4))
     width, height = landscape(A4)
 
-    # -------------------------
-    # Paragraph Style
-    # -------------------------
+    # 3. STYLE
     cert_style = ParagraphStyle(
         "cert_style",
         fontName="Times-Roman",
-        fontSize=20,        # ✅ bigger font
-        leading=30,         # ✅ spacing between wrapped lines
+        fontSize=18,        
+        leading=30,         
         alignment=TA_CENTER,
         textColor=THEME_BLUE
     )
 
-    # -------------------------
-    # Generate pages
-    # -------------------------
+    # 4. GENERATE PAGES
     for _, row in event_df.iterrows():
-
         # Draw background template
         if os.path.exists(TEMPLATE_IMG):
             c.drawImage(TEMPLATE_IMG, 0, 0, width=width, height=height)
-        else:
-            print(f"⚠️ Template image not found: {TEMPLATE_IMG}")
-
+        
         # Read fields safely
         name = str(row.get("Name", "")).strip()
         stu_class = f"{row.get('Class','')}".strip()
@@ -99,41 +74,35 @@ def generate_certificates_for_event(event_name, source_df=None):
         else:
             class_text = stu_class
 
-        # Format position
-        # If your CSV already contains "First", "Second" etc, keep it:
-        position_text = f"{position} Place"
-
-        # -------------------------
-        # ✅ Single Paragraph Text (Bold Highlights)
-        # -------------------------
+        # HTML Formatted Text
         certificate_text = f"""
-        This certificate is proudly presented to <b>{name}</b>, of <b>{class_text}</b>,
-        for securing <b>{position_text}</b> in <b>{event_name}</b>
+        This certificate is proudly presented to<br/>
+        <b><font size=28>{name}</font></b><br/><br/>
+        of {class_text} for securing<br/>
+        <b><font size=24>{position} Place</font></b> in <b>{event_name}</b><br/>
         at the Arts Festival 2026, held on January 14–15, 2026.
         """
 
         para = Paragraph(certificate_text, cert_style)
-
-        # Layout values
-        max_width = width - 280   # ✅ left/right margins
+        
+        # ALIGNMENT LOGIC (Start 50px below center to clear the ribbon)
+        max_width = width - 150
         w, h = para.wrap(max_width, 400)
-
-        x = (width - max_width) / 2
-
-        # ✅ Adjust this if needed (vertical position)
-        y = 160   # try 240 / 250 / 260
-
-        para.drawOn(c, x, y)
+        
+        y_position = (height / 2) - h - 50
+        
+        para.drawOn(c, (width - max_width) / 2, y_position)
 
         c.showPage()
 
     c.save()
-    return f"✅ Done! Generated: {output_filename}"
-
+    
+    # Return JUST the filename so the App can find it easily
+    return output_filename
 
 # -------------------------
 # RUN TEST
 # -------------------------
 if __name__ == "__main__":
-    test_event = "Pencil Drawing"   # Change this to your event name exactly
+    test_event = "Pencil Drawing" 
     print(generate_certificates_for_event(test_event))
