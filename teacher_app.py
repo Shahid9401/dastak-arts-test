@@ -75,7 +75,6 @@ if st.session_state.role is None:
                 ">
                     <img src="data:image/png;base64,{img_b64}" style="width: 130px; display: block;">
                 </div>
-                
                 <h3 style="margin: 0; text-align: center; font-size: 22px;">ASSABAH ARTS & SCIENCE COLLEGE</h3>
                 <h5 style="color: #B08D57; margin-top: 5px; font-weight: bold; text-align: center;">✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
             </div>
@@ -141,25 +140,6 @@ if st.session_state.role == "teacher":
     if st.sidebar.button("🚪 Logout"):
         st.session_state.role = None
         st.rerun()
-
-# ================= LOGIN =================
-if st.session_state.role is None:
-    st.subheader("🔐 Login")
-    u = st.text_input("Username")
-    p = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-        if u == TEACHER_USER and p == TEACHER_PASS:
-            st.session_state.role = "teacher"
-            st.success("Teacher login successful")
-            st.rerun()
-        elif u == ADMIN_USER and p == ADMIN_PASS:
-            st.session_state.role = "admin"
-            st.success("Admin login successful")
-            st.rerun()
-        else:
-            st.error("Invalid credentials")
-    st.stop()
 
 # ================= MAIN APP =================
 else:
