@@ -48,46 +48,43 @@ if "role" not in st.session_state:
 if "just_finalized" not in st.session_state:
     st.session_state.just_finalized = False
     
-# ---------------- 4. LOGIN SCREEN ----------------
+# ================= LOGIN =================
 if st.session_state.role is None:
-    # Helper to load image
+    # 1. HELPER: Convert image to Base64
     def get_base64_image(image_path):
         if not os.path.exists(image_path):
             return ""
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
 
+    # 2. RENDER LOGO & HEADER (Combined Block)
+    # This single block handles the white card, the logo, AND the text headers.
     img_b64 = get_base64_image("logo.png")
     
-    # Layout: Centered Column
     col1, col2, col3 = st.columns([1, 6, 1]) 
     with col2:
-        # LOGO & HEADER BLOCK
         st.markdown(
             f"""
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 20px;">
-                
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div style="
                     background-color: white; 
                     padding: 15px; 
                     border-radius: 20px; 
                     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                    margin-bottom: 20px;
+                    margin-bottom: 15px;
                 ">
-                    <img src="data:image/png;base64,{img_b64}" style="width: 120px; display: block;">
+                    <img src="data:image/png;base64,{img_b64}" style="width: 130px; display: block;">
                 </div>
                 
                 <h3 style="margin: 0; text-align: center; font-size: 22px;">ASSABAH ARTS & SCIENCE COLLEGE</h3>
-                <h5 style="color: #B08D57; margin-top: 8px; font-weight: bold; text-align: center;">✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
-            
+                <h5 style="color: #B08D57; margin-top: 5px; font-weight: bold; text-align: center;">✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
             </div>
             """,
             unsafe_allow_html=True
         )
 
+        # 3. LOGIN FORM
         st.write("") # Spacer
-
-        # LOGIN FORM
         with st.container(border=True):
             st.markdown("<h4 style='text-align: center; margin: 0;'>🔐 Staff Login</h4>", unsafe_allow_html=True)
             u = st.text_input("Username", placeholder="ID", label_visibility="collapsed")
@@ -104,9 +101,7 @@ if st.session_state.role is None:
                 else:
                     st.error("❌ Invalid Credentials")
 
-    # Stop execution here so the rest of the app doesn't load
-    st.stop()
-    
+    st.stop()    
                     
         # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2025 – Admin", layout="wide")
