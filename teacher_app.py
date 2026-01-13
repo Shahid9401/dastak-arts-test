@@ -48,38 +48,69 @@ if "just_finalized" not in st.session_state:
     st.session_state.just_finalized = False
 # ================= LOGIN =================
 # ================= LOGIN =================
+# ================= LOGIN =================
 if st.session_state.role is None:
-    # Use columns to center, but keep the middle one tight
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
-        # 1. LOGO: Set fixed width to 120px (Small enough for mobile)
-        if os.path.exists("logo.png"):
-            # Center the image manually using HTML or Streamlit columns
-            sub_c1, sub_c2, sub_c3 = st.columns([1, 1, 1])
-            with sub_c2:
-                # 'width=120' ensures it stays small and doesn't force scrolling
-                st.image("logo.png", width=120) 
-        
-        # 2. HEADER TEXT: Changed color to WHITE (#FFFFFF) for Dark Mode visibility
+        # 1. LOGO WITH WHITE BACKGROUND
+        # We create a container with a white background and rounded corners
+        # This guarantees the logo is visible in Dark Mode.
         st.markdown(
             """
-            <div style='text-align: center;'>
-                <h3 style='color: #FFFFFF; margin-bottom: 0; font-size: 20px;'>ASSABAH ARTS & SCIENCE COLLEGE</h3>
+            <div style='display: flex; justify-content: center;'>
+                <div style='background-color: white; padding: 10px; border-radius: 50%; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.2);'>
+                    <img src="app/static/logo.png" style='width: 120px;'> 
+                </div>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
+        
+        # NOTE: For the img src above to work reliably, Streamlit usually needs the image 
+        # to be served correctly. If the HTML <img> tag breaks, stick to st.image below:
+        
+        # --- ALTERNATIVE: SIMPLE STREAMLIT WAY (Recommended) ---
+        # If the HTML above is too complex or breaks the image path, use this instead:
+        with st.container():
+            sub_c1, sub_c2, sub_c3 = st.columns([1, 2, 1])
+            with sub_c2:
+                # This puts the logo inside a white card
+                st.markdown(
+                    """
+                    <style>
+                    [data-testid="stImage"] {
+                        background-color: white;
+                        padding: 10px;
+                        border-radius: 15px;
+                        display: block;
+                        margin-left: auto;
+                        margin-right: auto;
+                    }
+                    </style>
+                    """, 
+                    unsafe_allow_html=True
+                )
+                if os.path.exists("logo.png"):
+                    st.image("logo.png", width=120)
+
+        # 2. HEADER TEXT (Theme Adaptive)
+        st.markdown(
+            """
+            <div style='text-align: center; margin-top: 20px;'>
+                <h3 style='margin-bottom: 0; font-size: 20px;'>ASSABAH ARTS & SCIENCE COLLEGE</h3>
                 <h5 style='color: #B08D57; margin-top: 5px;'>✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
             </div>
             """, 
             unsafe_allow_html=True
         )
         
-        # 3. LOGIN BOX: Compact and centered
+        # 3. LOGIN BOX
         with st.container(border=True):
             st.markdown("<h4 style='text-align: center; margin: 0;'>🔐 Staff Login</h4>", unsafe_allow_html=True)
-            
             u = st.text_input("Username", placeholder="ID", label_visibility="collapsed")
             p = st.text_input("Password", type="password", placeholder="Password", label_visibility="collapsed")
-            
-            st.write("") # Tiny spacer
+            st.write("") 
             
             if st.button("Login", type="primary", use_container_width=True):
                 if u == TEACHER_USER and p == TEACHER_PASS:
@@ -92,7 +123,8 @@ if st.session_state.role is None:
                     st.error("❌ Invalid Credentials")
 
     st.stop()
-    # ---------------- PAGE CONFIG ----------------
+    
+        # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2025 – Admin", layout="wide")
 if st.session_state.role is None:
     render_header(compact=True)
