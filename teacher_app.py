@@ -289,7 +289,7 @@ else:
             # --- PDF DOWNLOAD ---
             df = read_results()
             df["Status"] = df["Status"].astype(str).str.strip().str.lower()
-            df["Event"] = df["Event"].astype(str).str.strip(
+            df["Event"] = df["Event"].astype(str).str.strip()
             is_final = not df[(df["Event"] == event_name) & (df["Status"] == "final")].empty
             
             # ... (Inside teacher_app.py, scroll to the 'if is_final:' block) ...
