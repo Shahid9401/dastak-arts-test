@@ -102,7 +102,8 @@ if st.session_state.role is None:
                     st.error("❌ Invalid Credentials")
 
     st.stop()
-            
+    
+                
         # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2025 – Admin", layout="wide")
 if st.session_state.role is None:
