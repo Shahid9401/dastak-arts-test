@@ -39,11 +39,63 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "admin123"
 
 # --- SESSION STATE ---
-if "role" not in st.session_state:
-    st.session_state.role = None
-if "just_finalized" not in st.session_state:
-    st.session_state.just_finalized = False
+# ================= LOGIN =================
+if st.session_state.role is None:
+    # 1. Create 3 columns to center the content (Left, Middle, Right)
+    col1, col2, col3 = st.columns([1, 2, 1])
 
+    with col2:
+        # --- HEADER SECTION ---
+        # Display Logo (Centered)
+        if os.path.exists("logo.png"):
+            # This trick centers the image using mini-columns inside the middle column
+            l, m, r = st.columns([1, 2, 1]) 
+            with m:
+                st.image("logo.png", use_container_width=True)
+        
+        # Styled Title using HTML for custom colors
+        st.markdown(
+            """
+            <div style='text-align: center;'>
+                <h2 style='color: #002147; margin-bottom: 0;'>ASSABAH ARTS & SCIENCE COLLEGE</h2>
+                <h4 style='color: #B08D57; margin-top: 5px;'>✨ DASTAK ARTS FESTIVAL 2026 ✨</h4>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
+        
+        st.write("") # Spacer
+        
+        # --- LOGIN FORM (Inside a Box) ---
+        # border=True creates a nice outline around the login form
+        with st.container(border=True):
+            st.markdown("<h3 style='text-align: center;'>🔐 Staff Login</h3>", unsafe_allow_html=True)
+            
+            u = st.text_input("Username", placeholder="Enter your ID")
+            p = st.text_input("Password", type="password", placeholder="Enter your password")
+            
+            st.write("") # Spacer
+            
+            # Make the button span the full width
+            if st.button("Login", type="primary", use_container_width=True):
+                if u == TEACHER_USER and p == TEACHER_PASS:
+                    st.session_state.role = "teacher"
+                    st.success("Login successful! Redirecting...")
+                    st.rerun()
+                elif u == ADMIN_USER and p == ADMIN_PASS:
+                    st.session_state.role = "admin"
+                    st.success("Admin login successful!")
+                    st.rerun()
+                else:
+                    st.error("❌ Invalid Username or Password")
+        
+        # --- FOOTER ---
+        st.markdown(
+            "<p style='text-align: center; color: grey; font-size: 12px; margin-top: 20px;'>© 2026 Dept of Physics | Valayamkulam</p>", 
+            unsafe_allow_html=True
+        )
+
+    st.stop()
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2025 – Admin", layout="wide")
 if st.session_state.role is None:
