@@ -289,10 +289,21 @@ else:
             # --- PDF DOWNLOAD ---
             df = read_results()
             df["Status"] = df["Status"].astype(str).str.strip().str.lower()
+            df["Event"] = df["Event"].astype(str).str.strip(
             is_final = not df[(df["Event"] == event_name) & (df["Status"] == "final")].empty
             
+            # ... (Inside teacher_app.py, scroll to the 'if is_final:' block) ...
+            
             if is_final:
+                st.markdown("---")
+                st.subheader("🖨️ Downloads & Certificates")
+                
+                col1, col2 = st.columns(2)
+                
+                # --- 1. RESULT LIST PDF ---
                 final_df = df[(df["Event"] == event_name) & (df["Status"] == "final")]
+                
+                # Check for existing PDF or generate new one
                 if 'generated_pdf' in st.session_state and st.session_state.just_finalized:
                     pdf_file = st.session_state['generated_pdf']
                 else:
@@ -300,8 +311,55 @@ else:
                 
                 if os.path.exists(pdf_file):
                     with open(pdf_file, "rb") as f:
-                        st.download_button("📄 Download PDF", f, file_name=pdf_file.split(os.sep)[-1], mime="application/pdf")
+                        col1.download_button(
+                            "📄 Download Result List", 
+                            f, 
+                            file_name=pdf_file.split(os.sep)[-1], 
+                            mime="application/pdf"
+                        )
 
+                # --- 2. CERTIFICATES ---
+                # This button triggers the import and generation
+                if col2.button("🎓 Generate Certificates"):
+                    from certificate_generator import generate_certificates_for_event
+                    
+                    with st.spinner("Generating certificates..."):
+                        try:
+                            # Call your function
+                            result_msg = generate_certificates_for_event(event_name)
+                            
+                            # Handle the result
+                            # If your function returns the filename directly:
+                            cert_file = result_msg 
+                            
+                            # OR if you kept the "✅ Done!" message, use this line instead:
+                            # cert_file = result_msg.split(": ")[-1] if "✅" in result_msg else result_msg
+
+                            # Check if valid file
+                            if cert_file.endswith(".pdf") and os.path.exists(cert_file):
+                                st.session_state['last_cert_file'] = cert_file
+                                st.success("✅ Certificates Ready!")
+                            else:
+                                st.error(f"Could not generate: {result_msg}")
+                                
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+
+                # Show Download Button if a certificate exists in session
+                if 'last_cert_file' in st.session_state:
+                    # Security check: Ensure the file belongs to the CURRENT event
+                    current_safe_name = event_name.replace(" ", "_").replace("/", "-")
+                    
+                    if current_safe_name in st.session_state['last_cert_file']:
+                        path = st.session_state['last_cert_file']
+                        if os.path.exists(path):
+                            with open(path, "rb") as f:
+                                col2.download_button(
+                                    "📥 Download All Certificates",
+                                    f,
+                                    file_name=path,
+                                    mime="application/pdf"
+                                )
         with tab2:
             # ... (Point Table code remains same) ...
             from sheet_utils import read_results
