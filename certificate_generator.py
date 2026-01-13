@@ -78,9 +78,7 @@ def generate_certificates_for_event(event_name, source_df=None):
         certificate_text = f"""
         This certificate is proudly presented to<br/>
         <b><font size=28>{name}</font></b><br/><br/>
-        of {class_text} for securing<br/>
-        <b><font size=24>{position} Place</font></b> in <b>{event_name}</b><br/>
-        at the Arts Festival 2026, held on January 14–15, 2026.
+        of {class_text} for securing<b><font size=24>{position} Place</font></b> in <b>{event_name}</b>at the Arts Festival 2026, held on January 14–15, 2026.
         """
 
         para = Paragraph(certificate_text, cert_style)

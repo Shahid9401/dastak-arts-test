@@ -134,6 +134,49 @@ else:
                 st.info("ℹ️ Please select an event.")
                 st.stop()
 
+            # ... (after event_name selection) ...
+
+            # [FIX] CHECK IF ALREADY FINALIZED
+            df_check = read_results()
+            df_check["Status"] = df_check["Status"].astype(str).str.strip().str.lower()
+            df_check["Event"] = df_check["Event"].astype(str).str.strip()
+            
+            # Check if this event is locked
+            is_locked = not df_check[(df_check["Event"] == event_name) & (df_check["Status"] == "final")].empty
+
+            if is_locked:
+                st.warning(f"🔒 Event '{event_name}' is Finalized. Editing is disabled.")
+                st.subheader("🖨️ Downloads & Certificates")
+                
+                col1, col2 = st.columns(2)
+                
+                # 1. DOWNLOAD LIST
+                final_df = df_check[(df_check["Event"] == event_name) & (df_check["Status"] == "final")]
+                pdf_file = generate_event_pdf(event_name, final_df)
+                
+                with open(pdf_file, "rb") as f:
+                    col1.download_button("📄 Download Result List", f, file_name=os.path.basename(pdf_file), mime="application/pdf")
+
+                # 2. GENERATE CERTIFICATES
+                if col2.button("🎓 Generate Certificates"):
+                    from certificate_generator import generate_certificates_for_event
+                    with st.spinner("Generating..."):
+                        result_msg = generate_certificates_for_event(event_name, source_df=df_check)
+                        if "✅" in result_msg:
+                            st.session_state['last_cert_file'] = result_msg.split(": ")[-1].strip()
+                            st.success("Ready!")
+                        else:
+                            st.error(result_msg)
+
+                if 'last_cert_file' in st.session_state and os.path.exists(st.session_state['last_cert_file']):
+                    with open(st.session_state['last_cert_file'], "rb") as f:
+                        col2.download_button("📥 Download Certificates", f, file_name="Certificates.pdf", mime="application/pdf")
+                
+                # STOP HERE so the inputs and save buttons don't show
+                st.stop() 
+
+            # ... (The rest of your code: "winners" init, inputs, etc.) ...
+
             if "winners" not in st.session_state:
                 st.session_state.winners = {"First": [], "Second": [], "Third": []}
 
@@ -223,10 +266,15 @@ else:
                 if onstage_category == "Group" and len(st.session_state.winners[pos]) > 0:
                     st.markdown("---")
 
-            # --- SAVE FUNCTION ---
+            # --- SAVE FUNCTION (UPDATED) ---
             def save_results(status):
                 status = status.strip().lower()
                 df = read_results()
+                
+                # [FIX] 1. Remove OLD entries for this specific event to prevent duplicates
+                if not df.empty:
+                    df = df[df["Event"] != event_name]
+                
                 rows = []
                 ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -234,15 +282,9 @@ else:
                     for i, w in enumerate(winners):
                         if w["Name"].strip() == "": continue
                         
-                        # 🔥 JOINT WINNER POINT LOGIC 🔥
-                        if onstage_category == "Group":
-                            # Only "Leaders" get points.
-                            # Leader = Index 0 OR explicitly marked 'is_new_team'
-                            is_leader_row = (i == 0) or w.get("is_new_team", False)
-                            current_points = POINTS[pos] if is_leader_row else 0
-                        else:
-                            # Individual = Everyone gets points
-                            current_points = POINTS[pos]
+                        # Joint Winner Point Logic
+                        is_leader_row = (i == 0) or w.get("is_new_team", False)
+                        current_points = POINTS[pos] if is_leader_row else 0
 
                         rows.append({
                             "Timestamp": ts, "Event": event_name, "Position": pos,
@@ -252,10 +294,15 @@ else:
                         })
 
                 if rows:
+                    # [FIX] 2. Concat the CLEANED df with the NEW rows
                     df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
                     write_results(df)
+                    
                     if status == "draft":
-                         st.session_state.winners = {"First": [], "Second": [], "Third": []}
+                         # Optional: Clear inputs after draft save, or keep them? 
+                         # Usually better to keep them in session if just drafting.
+                         pass 
+                         
                     st.success(f"Results saved as {status}")
                     st.cache_data.clear()
 
