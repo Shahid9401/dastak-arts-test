@@ -39,6 +39,13 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "admin123"
 
 # --- SESSION STATE ---
+# --- SESSION STATE INITIALIZATION ---
+# This must run BEFORE any other logic!
+if "role" not in st.session_state:
+    st.session_state.role = None
+
+if "just_finalized" not in st.session_state:
+    st.session_state.just_finalized = False
 # ================= LOGIN =================
 if st.session_state.role is None:
     # 1. Create 3 columns to center the content (Left, Middle, Right)
