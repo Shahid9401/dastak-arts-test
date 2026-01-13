@@ -57,15 +57,16 @@ if st.session_state.role is None:
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
 
-    # 2. RENDER LOGO & HEADER (Combined Block)
-    # This single block handles the white card, the logo, AND the text headers.
+    # 2. RENDER LOGO & HEADER
     img_b64 = get_base64_image("logo.png")
     
     col1, col2, col3 = st.columns([1, 6, 1]) 
     with col2:
+        # OPEN THE MARKDOWN BLOCK
         st.markdown(
             f"""
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                
                 <div style="
                     background-color: white; 
                     padding: 15px; 
@@ -78,10 +79,12 @@ if st.session_state.role is None:
                 
                 <h3 style="margin: 0; text-align: center; font-size: 22px;">ASSABAH ARTS & SCIENCE COLLEGE</h3>
                 <h5 style="color: #B08D57; margin-top: 5px; font-weight: bold; text-align: center;">✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
+            
             </div>
             """,
             unsafe_allow_html=True
         )
+        # CLOSE THE MARKDOWN BLOCK (Make sure the parenthesis above is there!)
 
         # 3. LOGIN FORM
         st.write("") # Spacer
@@ -101,8 +104,7 @@ if st.session_state.role is None:
                 else:
                     st.error("❌ Invalid Credentials")
 
-    st.stop()
-    
+    st.stop()    
                 
         # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2025 – Admin", layout="wide")
