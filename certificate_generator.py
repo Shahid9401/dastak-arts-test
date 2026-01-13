@@ -95,9 +95,8 @@ def generate_certificates_for_event(event_name, source_df=None):
 
     c.save()
     
-    # Return JUST the filename so the App can find it easily
-    return output_filename
-
+    # Return the Success message AND the filename
+    return f"✅ Success: {output_filename}"
 # -------------------------
 # RUN TEST
 # -------------------------
