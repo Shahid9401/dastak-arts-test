@@ -168,21 +168,38 @@ else:
         tab1, tab2 = st.tabs(["📝 Result Entry", "📊 Overall Point Table"])
         
         # -------- TAB 1: RESULT ENTRY --------
+        # -------- TAB 1: RESULT ENTRY --------
         with tab1:
+            # MOBILE FIX: Use Radio buttons inside an Expander to prevent keyboard popup
             if event_type == "Off-stage":
-                event_list = OFF_STAGE_EVENTS
                 event_options = ["--Select Event--"] + OFF_STAGE_EVENTS
-                event_name = st.selectbox("Off-stage Event", event_options)
+                
+                # The "Mobile Dropdown" Trick
+                with st.expander("🔻 Tap to Select Off-stage Event", expanded=False):
+                    event_name = st.radio("Select Event", event_options, label_visibility="collapsed")
+                
+                # Show the selected value clearly outside
+                if event_name != "--Select Event--":
+                    st.success(f"Selected: **{event_name}**")
+
                 onstage_category = "Individual" 
             else:
-                event_list = ON_STAGE_EVENTS
-                event_name = st.selectbox("On-stage Event", ["--Select Event--"] + ON_STAGE_EVENTS)
+                event_options = ["--Select Event--"] + ON_STAGE_EVENTS
+                
+                # The "Mobile Dropdown" Trick
+                with st.expander("🔻 Tap to Select On-stage Event", expanded=False):
+                    event_name = st.radio("Select Event", event_options, label_visibility="collapsed")
+                
+                if event_name != "--Select Event--":
+                    st.success(f"Selected: **{event_name}**")
+                
                 onstage_category = st.radio("Select Category", ["Individual", "Group"], horizontal=True)
 
             # Reset on category switch
             if "last_onstage_category" not in st.session_state:
                 st.session_state.last_onstage_category = onstage_category
-
+                
+        # ... (Rest of the code continues as normal) ...
             if st.session_state.last_onstage_category != onstage_category:
                 st.session_state.winners = {"First": [], "Second": [], "Third": []}
                 st.session_state.last_onstage_category = onstage_category
