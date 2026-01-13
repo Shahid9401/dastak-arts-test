@@ -47,63 +47,52 @@ if "role" not in st.session_state:
 if "just_finalized" not in st.session_state:
     st.session_state.just_finalized = False
 # ================= LOGIN =================
+# ================= LOGIN =================
 if st.session_state.role is None:
-    # 1. Create 3 columns to center the content (Left, Middle, Right)
+    # Use columns to center, but keep the middle one tight
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
-        # --- HEADER SECTION ---
-        # Display Logo (Centered)
+        # 1. LOGO: Set fixed width to 120px (Small enough for mobile)
         if os.path.exists("logo.png"):
-            # This trick centers the image using mini-columns inside the middle column
-            l, m, r = st.columns([1, 2, 1]) 
-            with m:
-                st.image("logo.png", use_container_width=True)
+            # Center the image manually using HTML or Streamlit columns
+            sub_c1, sub_c2, sub_c3 = st.columns([1, 1, 1])
+            with sub_c2:
+                # 'width=120' ensures it stays small and doesn't force scrolling
+                st.image("logo.png", width=120) 
         
-        # Styled Title using HTML for custom colors
+        # 2. HEADER TEXT: Changed color to WHITE (#FFFFFF) for Dark Mode visibility
         st.markdown(
             """
             <div style='text-align: center;'>
-                <h2 style='color: #002147; margin-bottom: 0;'>ASSABAH ARTS & SCIENCE COLLEGE</h2>
-                <h4 style='color: #B08D57; margin-top: 5px;'>✨ DASTAK ARTS FESTIVAL 2026 ✨</h4>
+                <h3 style='color: #FFFFFF; margin-bottom: 0; font-size: 20px;'>ASSABAH ARTS & SCIENCE COLLEGE</h3>
+                <h5 style='color: #B08D57; margin-top: 5px;'>✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
             </div>
             """, 
             unsafe_allow_html=True
         )
         
-        st.write("") # Spacer
-        
-        # --- LOGIN FORM (Inside a Box) ---
-        # border=True creates a nice outline around the login form
+        # 3. LOGIN BOX: Compact and centered
         with st.container(border=True):
-            st.markdown("<h3 style='text-align: center;'>🔐 Staff Login</h3>", unsafe_allow_html=True)
+            st.markdown("<h4 style='text-align: center; margin: 0;'>🔐 Staff Login</h4>", unsafe_allow_html=True)
             
-            u = st.text_input("Username", placeholder="Enter your ID")
-            p = st.text_input("Password", type="password", placeholder="Enter your password")
+            u = st.text_input("Username", placeholder="ID", label_visibility="collapsed")
+            p = st.text_input("Password", type="password", placeholder="Password", label_visibility="collapsed")
             
-            st.write("") # Spacer
+            st.write("") # Tiny spacer
             
-            # Make the button span the full width
             if st.button("Login", type="primary", use_container_width=True):
                 if u == TEACHER_USER and p == TEACHER_PASS:
                     st.session_state.role = "teacher"
-                    st.success("Login successful! Redirecting...")
                     st.rerun()
                 elif u == ADMIN_USER and p == ADMIN_PASS:
                     st.session_state.role = "admin"
-                    st.success("Admin login successful!")
                     st.rerun()
                 else:
-                    st.error("❌ Invalid Username or Password")
-        
-        # --- FOOTER ---
-        st.markdown(
-            "<p style='text-align: center; color: grey; font-size: 12px; margin-top: 20px;'>© 2026 Dept of Physics | Valayamkulam</p>", 
-            unsafe_allow_html=True
-        )
+                    st.error("❌ Invalid Credentials")
 
     st.stop()
-# ---------------- PAGE CONFIG ----------------
+    # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2025 – Admin", layout="wide")
 if st.session_state.role is None:
     render_header(compact=True)
