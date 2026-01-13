@@ -320,27 +320,29 @@ else:
 
                 # --- 2. CERTIFICATES ---
                 # This button triggers the import and generation
+                # ... inside teacher_app.py ...
+
+                # --- 2. CERTIFICATES ---
                 if col2.button("🎓 Generate Certificates"):
                     from certificate_generator import generate_certificates_for_event
                     
                     with st.spinner("Generating certificates..."):
                         try:
-                            # Call your function
-                            result_msg = generate_certificates_for_event(event_name)
+                            # PASS THE DATAFRAME DIRECTLY HERE 👇
+                            # We use 'df' (the full dataframe) or 'final_df' (the filtered one)
+                            # Passing 'df' is safer as the function filters it again.
+                            result_msg = generate_certificates_for_event(event_name, source_df=df)
                             
-                            # Handle the result
-                            # If your function returns the filename directly:
-                            cert_file = result_msg 
-                            
-                            # OR if you kept the "✅ Done!" message, use this line instead:
-                            # cert_file = result_msg.split(": ")[-1] if "✅" in result_msg else result_msg
+                            if "✅" in result_msg:
+                                cert_file = result_msg.split(": ")[-1].strip()
+                            else:
+                                cert_file = result_msg
 
-                            # Check if valid file
                             if cert_file.endswith(".pdf") and os.path.exists(cert_file):
                                 st.session_state['last_cert_file'] = cert_file
                                 st.success("✅ Certificates Ready!")
                             else:
-                                st.error(f"Could not generate: {result_msg}")
+                                st.error(result_msg)
                                 
                         except Exception as e:
                             st.error(f"Error: {e}")

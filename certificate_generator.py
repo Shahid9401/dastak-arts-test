@@ -18,7 +18,26 @@ DATA_FILE = "results.csv"                   # Your results file
 THEME_BLUE = Color(0/255, 33/255, 71/255)
 
 
-def generate_certificates_for_event(event_name):
+def generate_certificates_for_event(event_name, source_df=None):
+    # 1. GET DATA
+    # If the app passed the data directly, use it!
+    if source_df is not None:
+        df = source_df.copy()
+    else:
+        # Fallback to reading the file (for manual testing)
+        if not os.path.exists(DATA_FILE):
+            return f"❌ Error: '{DATA_FILE}' not found."
+        df = pd.read_csv(DATA_FILE)
+
+    # Clean columns (Just in case)
+    df["Event"] = df["Event"].astype(str).str.strip()
+    df["Status"] = df["Status"].astype(str).str.strip().str.lower()
+
+    # Filter only FINAL for that event
+    event_df = df[(df["Event"] == event_name) & (df["Status"] == "final")]
+
+    if event_df.empty:
+        return f"⚠️ No finalized results found for event: {event_name}"
     # -------------------------
     # Read & validate CSV
     # -------------------------
