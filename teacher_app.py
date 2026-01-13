@@ -46,43 +46,25 @@ if "role" not in st.session_state:
 
 if "just_finalized" not in st.session_state:
     st.session_state.just_finalized = False
-# ================= LOGIN =================
-# ================= LOGIN =================
+    
 # ================= LOGIN =================
 if st.session_state.role is None:
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
-        # 1. LOGO WITH WHITE BACKGROUND
-        # We create a container with a white background and rounded corners
-        # This guarantees the logo is visible in Dark Mode.
-        st.markdown(
-            """
-            <div style='display: flex; justify-content: center;'>
-                <div style='background-color: white; padding: 10px; border-radius: 50%; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.2);'>
-                    <img src="app/static/logo.png" style='width: 120px;'> 
-                </div>
-            </div>
-            """, 
-            unsafe_allow_html=True
-        )
-        
-        # NOTE: For the img src above to work reliably, Streamlit usually needs the image 
-        # to be served correctly. If the HTML <img> tag breaks, stick to st.image below:
-        
-        # --- ALTERNATIVE: SIMPLE STREAMLIT WAY (Recommended) ---
-        # If the HTML above is too complex or breaks the image path, use this instead:
+        # 1. LOGO (Streamlit Native Way - Reliable)
+        # This container puts the white card background behind the logo
         with st.container():
             sub_c1, sub_c2, sub_c3 = st.columns([1, 2, 1])
             with sub_c2:
-                # This puts the logo inside a white card
+                # CSS to force white background on the image
                 st.markdown(
                     """
                     <style>
                     [data-testid="stImage"] {
                         background-color: white;
-                        padding: 10px;
-                        border-radius: 15px;
+                        padding: 15px;
+                        border-radius: 20px;
                         display: block;
                         margin-left: auto;
                         margin-right: auto;
@@ -92,12 +74,12 @@ if st.session_state.role is None:
                     unsafe_allow_html=True
                 )
                 if os.path.exists("logo.png"):
-                    st.image("logo.png", width=120)
+                    st.image("logo.png", width=130)
 
-        # 2. HEADER TEXT (Theme Adaptive)
+        # 2. HEADER TEXT
         st.markdown(
             """
-            <div style='text-align: center; margin-top: 20px;'>
+            <div style='text-align: center; margin-top: 10px;'>
                 <h3 style='margin-bottom: 0; font-size: 20px;'>ASSABAH ARTS & SCIENCE COLLEGE</h3>
                 <h5 style='color: #B08D57; margin-top: 5px;'>✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
             </div>
@@ -123,7 +105,7 @@ if st.session_state.role is None:
                     st.error("❌ Invalid Credentials")
 
     st.stop()
-    
+
         # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2025 – Admin", layout="wide")
 if st.session_state.role is None:
