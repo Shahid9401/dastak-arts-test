@@ -14,12 +14,14 @@ from config import (
 )
 from pdf_generator import generate_event_pdf
 from sheet_utils import read_results, write_results, add_notification
-# Removed 'render_header' import to clear the main banner
 
-# ---------------- 1. PAGE CONFIG (MUST BE FIRST) ----------------
+# ---------------- 1. PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2026", layout="wide")
 
 # ---------------- 2. CONFIGURATION ----------------
+# [USER UPDATE] Your logo filename
+LOGO_FILE = "arts_logo.jpg" 
+
 POINTS = {"First": 5, "Second": 3, "Third": 1}
 
 GROUP_NAMES_ML = {
@@ -40,15 +42,12 @@ TEACHER_PASS = "teacher123"
 ADMIN_USER = "admin"
 ADMIN_PASS = "admin123"
 
-# ---------------- 3. SESSION STATE INITIALIZATION ----------------
+# ---------------- 3. SESSION STATE ----------------
 if "role" not in st.session_state: st.session_state.role = None
 if "just_finalized" not in st.session_state: st.session_state.just_finalized = False
 if "winners" not in st.session_state: st.session_state.winners = {"First": [], "Second": [], "Third": []}
-
-# [NEW] RESET COUNTER (To force menus to close)
 if "menu_reset_token" not in st.session_state: st.session_state.menu_reset_token = 0
 
-# [NEW] CALLBACK: Increments token -> Forces Expander Re-render -> Closes it
 def force_close_menu():
     st.session_state.menu_reset_token += 1
 
@@ -59,7 +58,7 @@ if st.session_state.role is None:
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
 
-    img_b64 = get_base64_image("logo.png")
+    img_b64 = get_base64_image(LOGO_FILE)
     
     col1, col2, col3 = st.columns([1, 6, 1]) 
     with col2:
@@ -67,7 +66,7 @@ if st.session_state.role is None:
             f"""
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 20px;">
                 <div style="background-color: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); margin-bottom: 20px;">
-                    <img src="data:image/png;base64,{img_b64}" style="width: 120px; display: block;">
+                    <img src="data:image/png;base64,{img_b64}" style="width: 140px; display: block;">
                 </div>
                 <h3 style="margin: 0; text-align: center; font-size: 22px;">ASSABAH ARTS & SCIENCE COLLEGE</h3>
                 <h5 style="color: #B08D57; margin-top: 8px; font-weight: bold; text-align: center;">✨ DASTAK ARTS FESTIVAL 2026 ✨</h5>
@@ -93,20 +92,19 @@ if st.session_state.role is None:
     st.stop()
 
 # ---------------- 5. MAIN APP ----------------
-# [FIX] Removed 'render_header()' so the main page is clean.
-
 DATA_FILE = "results.csv"
 if not os.path.exists(DATA_FILE):
     pd.DataFrame(columns=["Timestamp", "Event", "Position", "Name", "Semester", "Class", "Group", "Points", "Status"]).to_csv(DATA_FILE, index=False)
 
-# SIDEBAR DESIGN
+# --- SIDEBAR ---
 if st.session_state.role == "teacher":
     with st.sidebar:
-        if os.path.exists("logo.png"):
-            # Center the logo using columns
-            _, c_logo, _ = st.columns([1, 2, 1])
-            with c_logo:
-                st.image("arts_logo.jpg", width=100)
+        if os.path.exists(LOGO_FILE):
+            # [NEW] Bigger Logo: We give it 80% of the sidebar width
+            # c1=spacer, c2=image, c3=spacer
+            c1, c2, c3 = st.columns([0.1, 0.8, 0.1])
+            with c2:
+                st.image(LOGO_FILE, use_container_width=True)
         
         st.markdown("<h3 style='text-align: center; color: #B08D57; margin-bottom:0;'>Teacher Panel</h3>", unsafe_allow_html=True)
         st.markdown("---")
@@ -127,20 +125,26 @@ if st.session_state.role == "teacher":
 # --- TEACHER PANEL LOGIC ---
 if st.session_state.role == "teacher":
     
+    # [NEW] CENTERED HEADER & WELCOME MESSAGE
+    st.markdown(
+        """
+        <div style='text-align: center; padding-bottom: 20px;'>
+            <h1 style='color: #002147; margin-bottom: 5px;'>✨ DASTAK ARTS FESTIVAL 2026 ✨</h1>
+            <h4 style='color: #666; font-weight: normal; margin-top: 0;'>Welcome to the Result Entry Portal</h4>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
+    
     event_type = st.radio("Select Event Type", ["Off-stage", "On-stage"], horizontal=True)
     tab1, tab2 = st.tabs(["📝 Result Entry", "📊 Overall Point Table"])
     
     # -------- TAB 1: RESULT ENTRY --------
     with tab1:
-        # [NEW] FORCE CLOSE TRICK
-        # We append invisible chars (\u200b) based on the counter.
-        # When counter changes, Label changes -> Streamlit resets component -> Closes it.
         reset_suffix = "\u200b" * st.session_state.menu_reset_token
 
         if event_type == "Off-stage":
             event_options = ["--Select Event--"] + OFF_STAGE_EVENTS
-            
-            # Label changes on every selection, forcing a close
             with st.expander(f"🔻 Tap to Select Off-stage Event{reset_suffix}", expanded=False):
                 event_name = st.radio(
                     "Select Event", 
@@ -148,14 +152,12 @@ if st.session_state.role == "teacher":
                     label_visibility="collapsed",
                     on_change=force_close_menu
                 )
-            
             if event_name != "--Select Event--":
                 st.info(f"Selected: **{event_name}**")
             onstage_category = "Individual" 
 
         else:
             event_options = ["--Select Event--"] + ON_STAGE_EVENTS
-            
             with st.expander(f"🔻 Tap to Select On-stage Event{reset_suffix}", expanded=False):
                 event_name = st.radio(
                     "Select Event", 
@@ -163,13 +165,11 @@ if st.session_state.role == "teacher":
                     label_visibility="collapsed",
                     on_change=force_close_menu
                 )
-            
             if event_name != "--Select Event--":
                 st.info(f"Selected: **{event_name}**")
-            
             onstage_category = st.radio("Select Category", ["Individual", "Group"], horizontal=True)
 
-        # Reset winners if category changes
+        # Reset Logic
         if "last_onstage_category" not in st.session_state:
             st.session_state.last_onstage_category = onstage_category
         if st.session_state.last_onstage_category != onstage_category:
