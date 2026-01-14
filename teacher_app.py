@@ -106,7 +106,7 @@ if st.session_state.role == "teacher":
             # Center the logo using columns
             _, c_logo, _ = st.columns([1, 2, 1])
             with c_logo:
-                st.image("logo.png", width=100)
+                st.image("arts_logo.jpg", width=100)
         
         st.markdown("<h3 style='text-align: center; color: #B08D57; margin-bottom:0;'>Teacher Panel</h3>", unsafe_allow_html=True)
         st.markdown("---")
