@@ -14,7 +14,7 @@ from config import (
 )
 from pdf_generator import generate_event_pdf
 from sheet_utils import read_results, write_results, add_notification
-from header import render_header
+# Removed 'render_header' import to clear the main banner
 
 # ---------------- 1. PAGE CONFIG (MUST BE FIRST) ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2026", layout="wide")
@@ -45,16 +45,12 @@ if "role" not in st.session_state: st.session_state.role = None
 if "just_finalized" not in st.session_state: st.session_state.just_finalized = False
 if "winners" not in st.session_state: st.session_state.winners = {"First": [], "Second": [], "Third": []}
 
-# [NEW] STATES FOR AUTO-CLOSING MENUS
-if "exp_offstage" not in st.session_state: st.session_state.exp_offstage = False
-if "exp_onstage" not in st.session_state: st.session_state.exp_onstage = False
+# [NEW] RESET COUNTER (To force menus to close)
+if "menu_reset_token" not in st.session_state: st.session_state.menu_reset_token = 0
 
-# [NEW] CALLBACK FUNCTIONS (These run when you tap an event)
-def close_offstage_menu():
-    st.session_state.exp_offstage = False
-
-def close_onstage_menu():
-    st.session_state.exp_onstage = False
+# [NEW] CALLBACK: Increments token -> Forces Expander Re-render -> Closes it
+def force_close_menu():
+    st.session_state.menu_reset_token += 1
 
 # ---------------- 4. LOGIN SCREEN ----------------
 if st.session_state.role is None:
@@ -97,13 +93,13 @@ if st.session_state.role is None:
     st.stop()
 
 # ---------------- 5. MAIN APP ----------------
-render_header()
+# [FIX] Removed 'render_header()' so the main page is clean.
 
 DATA_FILE = "results.csv"
 if not os.path.exists(DATA_FILE):
     pd.DataFrame(columns=["Timestamp", "Event", "Position", "Name", "Semester", "Class", "Group", "Points", "Status"]).to_csv(DATA_FILE, index=False)
 
-# [NEW] SIDEBAR WITH LOGO AT TOP
+# SIDEBAR DESIGN
 if st.session_state.role == "teacher":
     with st.sidebar:
         if os.path.exists("logo.png"):
@@ -120,7 +116,7 @@ if st.session_state.role == "teacher":
             **For Group Items:**
             1. **Start a Team:** Click **➕ Add New Team**.
             2. **Add Members:** Click **Add Member**.
-            3. **Joint Winners:** Click **➕ Add New Team** again to start a second winning team.
+            3. **Joint Winners:** Click **➕ Add New Team** again.
             """)
         
         st.markdown("---")
@@ -136,20 +132,22 @@ if st.session_state.role == "teacher":
     
     # -------- TAB 1: RESULT ENTRY --------
     with tab1:
-        # [NEW] AUTO-CLOSING LISTS
+        # [NEW] FORCE CLOSE TRICK
+        # We append invisible chars (\u200b) based on the counter.
+        # When counter changes, Label changes -> Streamlit resets component -> Closes it.
+        reset_suffix = "\u200b" * st.session_state.menu_reset_token
+
         if event_type == "Off-stage":
             event_options = ["--Select Event--"] + OFF_STAGE_EVENTS
-            with st.expander("🔻 Tap to Select Off-stage Event", expanded=st.session_state.exp_offstage):
+            
+            # Label changes on every selection, forcing a close
+            with st.expander(f"🔻 Tap to Select Off-stage Event{reset_suffix}", expanded=False):
                 event_name = st.radio(
                     "Select Event", 
                     event_options, 
                     label_visibility="collapsed",
-                    on_change=close_offstage_menu # <--- Closes menu on selection
+                    on_change=force_close_menu
                 )
-            
-            # Keep it open if nothing is selected yet
-            if event_name == "--Select Event--":
-                st.session_state.exp_offstage = True
             
             if event_name != "--Select Event--":
                 st.info(f"Selected: **{event_name}**")
@@ -157,16 +155,14 @@ if st.session_state.role == "teacher":
 
         else:
             event_options = ["--Select Event--"] + ON_STAGE_EVENTS
-            with st.expander("🔻 Tap to Select On-stage Event", expanded=st.session_state.exp_onstage):
+            
+            with st.expander(f"🔻 Tap to Select On-stage Event{reset_suffix}", expanded=False):
                 event_name = st.radio(
                     "Select Event", 
                     event_options, 
                     label_visibility="collapsed",
-                    on_change=close_onstage_menu # <--- Closes menu on selection
+                    on_change=force_close_menu
                 )
-            
-            if event_name == "--Select Event--":
-                st.session_state.exp_onstage = True
             
             if event_name != "--Select Event--":
                 st.info(f"Selected: **{event_name}**")
