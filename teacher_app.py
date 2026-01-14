@@ -18,9 +18,6 @@ from sheet_utils import read_results, write_results, add_notification
 # ---------------- 1. PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2026", layout="wide")
 
-
-    st.session_state.just_finalized = False
-
 # [NEW] CSS: Target "Select Event Type" Label Only
 st.markdown("""
 <style>
