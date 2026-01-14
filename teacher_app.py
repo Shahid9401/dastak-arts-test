@@ -18,6 +18,14 @@ from sheet_utils import read_results, write_results, add_notification
 # ---------------- 1. PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2026", layout="wide")
 
+# --- SESSION STATE INITIALIZATION ---
+# This must run BEFORE any other logic!
+if "role" not in st.session_state:
+    st.session_state.role = None
+
+if "just_finalized" not in st.session_state:
+    st.session_state.just_finalized = False
+
 # [NEW] CSS: Target "Select Event Type" Label Only
 st.markdown("""
 <style>
