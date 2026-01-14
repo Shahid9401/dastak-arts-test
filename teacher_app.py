@@ -18,12 +18,7 @@ from sheet_utils import read_results, write_results, add_notification
 # ---------------- 1. PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2026", layout="wide")
 
-# --- SESSION STATE INITIALIZATION ---
-# This must run BEFORE any other logic!
-if "role" not in st.session_state:
-    st.session_state.role = None
 
-if "just_finalized" not in st.session_state:
     st.session_state.just_finalized = False
 
 # [NEW] CSS: Target "Select Event Type" Label Only
@@ -91,7 +86,7 @@ if st.session_state.role is None:
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
 
-    img_b64 = get_base64_image(logo.png)
+    img_b64 = get_base64_image("logo.png")
     
     col1, col2, col3 = st.columns([1, 6, 1]) 
     with col2:
