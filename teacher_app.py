@@ -18,8 +18,22 @@ from sheet_utils import read_results, write_results, add_notification
 # ---------------- 1. PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2026", layout="wide")
 
+# [NEW] CUSTOM CSS TO BOOST FONT SIZES
+st.markdown("""
+<style>
+    /* Make the Expander Header ("Tap to Select...") Larger & Bolder */
+    div[data-testid="stExpander"] summary p {
+        font-size: 1.2rem !important;
+        font-weight: 600 !important;
+    }
+    /* Optional: Make the Radio Button options slightly larger too */
+    div[role="radiogroup"] label p {
+        font-size: 1rem !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # ---------------- 2. CONFIGURATION ----------------
-# [USER UPDATE] Your logo filename
 LOGO_FILE = "arts_logo.jpg" 
 
 POINTS = {"First": 5, "Second": 3, "Third": 1}
@@ -100,11 +114,8 @@ if not os.path.exists(DATA_FILE):
 if st.session_state.role == "teacher":
     with st.sidebar:
         if os.path.exists(LOGO_FILE):
-            # [NEW] Bigger Logo: We give it 80% of the sidebar width
-            # c1=spacer, c2=image, c3=spacer
-            c1, c2, c3 = st.columns([0.1, 0.8, 0.1])
-            with c2:
-                st.image(LOGO_FILE, use_container_width=True)
+            # [NEW] Full Width Logo: Removed columns so it fills the sidebar
+            st.image(LOGO_FILE, use_container_width=True)
         
         st.markdown("<h3 style='text-align: center; color: #B08D57; margin-bottom:0;'>Teacher Panel</h3>", unsafe_allow_html=True)
         st.markdown("---")
@@ -125,11 +136,11 @@ if st.session_state.role == "teacher":
 # --- TEACHER PANEL LOGIC ---
 if st.session_state.role == "teacher":
     
-    # [NEW] CENTERED HEADER & WELCOME MESSAGE
+    # CENTERED HEADER
     st.markdown(
         """
         <div style='text-align: center; padding-bottom: 20px;'>
-            <h1 style='color: #002147; margin-bottom: 5px;'>✨ DASTAK ARTS FESTIVAL 2026 ✨</h1>
+            <h1 style='color: #002147; margin-bottom: 5px; font-size: 2.5rem;'>✨ DASTAK ARTS FESTIVAL 2026 ✨</h1>
             <h4 style='color: #666; font-weight: normal; margin-top: 0;'>Welcome to the Result Entry Portal</h4>
         </div>
         """, 
