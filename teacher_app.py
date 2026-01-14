@@ -18,23 +18,28 @@ from sheet_utils import read_results, write_results, add_notification
 # ---------------- 1. PAGE CONFIG ----------------
 st.set_page_config(page_title="DASTAK Arts Festival 2026", layout="wide")
 
-# [NEW] SMARTER CSS
+# [NEW] CSS: Target "Select Event Type" Label Only
 st.markdown("""
 <style>
-    /* 1. TARGET ONLY MAIN AREA EXPANDERS (The "Select Event" box) */
-    /* We use section[data-testid="stMain"] to ensure we DON'T touch the sidebar */
-    section[data-testid="stMain"] div[data-testid="stExpander"] summary p {
-        font-size: 1.3rem !important; /* Larger text */
-        font-weight: 700 !important;   /* Bolder */
-        color: #002147 !important;     /* Navy Blue color */
+    /* 1. Make Radio Button Labels (e.g. "Select Event Type") LARGE & BOLD */
+    div[data-testid="stRadio"] > label {
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        color: #002147 !important; /* Navy Blue */
     }
 
-    /* 2. FORCE SIDEBAR LOGO TO BE MAX WIDTH */
+    /* 2. Revert Expander Header ("Tap to Select") to normal size 
+       (We simply removed the CSS that made it huge) */
+
+    /* 3. Keep Sidebar Logo Width Fix */
     section[data-testid="stSidebar"] div[data-testid="stImage"] img {
         width: 100% !important;
         max-width: 100% !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
+    }
+    
+    /* 4. Remove extra top padding in Sidebar so logo sits higher */
+    section[data-testid="stSidebar"] div.block-container {
+        padding-top: 2rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -120,7 +125,6 @@ if not os.path.exists(DATA_FILE):
 if st.session_state.role == "teacher":
     with st.sidebar:
         if os.path.exists(LOGO_FILE):
-            # FULL WIDTH IMAGE
             st.image(LOGO_FILE, use_container_width=True)
         
         st.markdown("<h3 style='text-align: center; color: #B08D57; margin-bottom:0;'>Teacher Panel</h3>", unsafe_allow_html=True)
@@ -153,7 +157,9 @@ if st.session_state.role == "teacher":
         unsafe_allow_html=True
     )
     
+    # This Label will now be BIG and NAVY BLUE thanks to the CSS above
     event_type = st.radio("Select Event Type", ["Off-stage", "On-stage"], horizontal=True)
+    
     tab1, tab2 = st.tabs(["📝 Result Entry", "📊 Overall Point Table"])
     
     # -------- TAB 1: RESULT ENTRY --------
