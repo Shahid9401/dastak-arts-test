@@ -83,7 +83,7 @@ if st.session_state.role is None:
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
 
-    img_b64 = get_base64_image(LOGO_FILE)
+    img_b64 = get_base64_image(logo.png)
     
     col1, col2, col3 = st.columns([1, 6, 1]) 
     with col2:
